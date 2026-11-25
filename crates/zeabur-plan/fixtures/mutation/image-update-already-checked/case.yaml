@@ -1,0 +1,7 @@
+description: "An occurrence of the window is checked once; a second attempt in it writes nothing."
+operation: mutation.imageUpdate
+params:
+  tags:
+  - 7.2.4
+  - 7.2.5
+  now: '2026-11-29T03:00:00Z'

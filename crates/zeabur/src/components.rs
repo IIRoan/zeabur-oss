@@ -11,14 +11,7 @@ use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use std::time::Duration;
 
-use axum::Router;
-use axum::body::Body;
-use axum::http::{Method, Request, header};
-use serde::Serialize;
-use serde::de::DeserializeOwned;
 use tokio::time::Instant;
-use tower::ServiceExt as _;
-use zeabur_api::access::SingleCluster;
 use zeabur_api::cluster::components::{
     ComponentAction, ComponentApplied, ComponentPlan, ComponentRequest, StepState,
 };
@@ -30,12 +23,12 @@ use zeabur_kube::{
     Cluster as _, ClusterEndpoint, ObjectTarget, Preconditions, UserClient, WriteBody, WriteRequest,
 };
 
+use crate::api::Api;
+
 /// The service account token of this pod, which kubelet renews.
 const TOKEN_FILE: &str = "/var/run/secrets/kubernetes.io/serviceaccount/token";
 /// How long to wait before asking for the plan again.
 const POLL: Duration = Duration::from_secs(3);
-/// The largest answer read.
-const MAX_BODY: usize = 16 * 1024 * 1024;
 
 /// Zeabur Catalog's components.
 #[derive(Debug, clap::Parser)]
@@ -75,7 +68,7 @@ struct InstallArgs {
 }
 
 /// A time limit such as `90s`, `10m` or `1h30m`, in jiff's friendly format.
-fn duration(text: &str) -> Result<Duration, String> {
+pub(crate) fn duration(text: &str) -> Result<Duration, String> {
     text.parse::<SignedDuration>()
         .ok()
         .and_then(|limit| Duration::try_from(limit).ok())
@@ -93,7 +86,7 @@ pub(crate) async fn run(args: &ComponentsArgs) -> Result<(), String> {
     let endpoint = ClusterEndpoint::in_cluster().map_err(|e| e.to_string())?;
     let cluster =
         UserClient::with_token_file(&endpoint, Path::new(TOKEN_FILE)).map_err(|e| e.to_string())?;
-    let api = Api::new(cluster.clone(), settings);
+    let api = Api::new(Arc::new(cluster.clone()), settings);
     let deadline = Instant::now() + args.timeout;
     for id in &args.components {
         tokio::time::timeout_at(deadline, install(&api, id))
@@ -222,71 +215,6 @@ fn progress(plan: &ComponentPlan) -> Progress {
 
 fn describe(problem: Box<Problem>) -> String {
     problem.detail
-}
-
-/// The API, called in this process as the service account.
-struct Api {
-    router: Router,
-}
-
-impl Api {
-    fn new(cluster: UserClient, settings: zeabur_api::Settings) -> Self {
-        Self {
-            router: zeabur_api::router_with(
-                Arc::new(SingleCluster(Arc::new(cluster))),
-                zeabur_api::Options {
-                    settings,
-                    ..zeabur_api::Options::default()
-                },
-            ),
-        }
-    }
-
-    async fn get<T: DeserializeOwned>(&self, path: &str) -> Result<T, Box<Problem>> {
-        self.send(Request::builder().uri(path), Body::empty()).await
-    }
-
-    async fn post<B: Serialize + Sync, T: DeserializeOwned>(
-        &self,
-        path: &str,
-        body: &B,
-    ) -> Result<T, Box<Problem>> {
-        let bytes = serde_json::to_vec(body).map_err(internal)?;
-        let request = Request::builder()
-            .method(Method::POST)
-            .uri(path)
-            .header(header::CONTENT_TYPE, "application/json")
-            .header(header::CONTENT_LENGTH, bytes.len());
-        self.send(request, Body::from(bytes)).await
-    }
-
-    async fn send<T: DeserializeOwned>(
-        &self,
-        request: axum::http::request::Builder,
-        body: Body,
-    ) -> Result<T, Box<Problem>> {
-        let request = request.body(body).map_err(internal)?;
-        let Ok(response) = self.router.clone().oneshot(request).await;
-        let status = response.status();
-        let body = axum::body::to_bytes(response.into_body(), MAX_BODY)
-            .await
-            .map_err(internal)?;
-        if status.is_success() {
-            serde_json::from_slice(&body).map_err(internal)
-        } else {
-            Err(serde_json::from_slice(&body).map_or_else(
-                |_e| internal(format!("the API answered {status} without a problem")),
-                Box::new,
-            ))
-        }
-    }
-}
-
-fn internal(error: impl std::fmt::Display) -> Box<Problem> {
-    Box::new(Problem::new(
-        zeabur_core::problem::Kind::Internal,
-        error.to_string(),
-    ))
 }
 
 #[cfg(test)]

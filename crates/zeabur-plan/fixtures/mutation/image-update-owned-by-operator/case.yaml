@@ -1,0 +1,7 @@
+description: "A StatefulSet an operator controls is refused: the operator would restore its template."
+operation: mutation.imageUpdate
+params:
+  tags:
+  - 7.2.4
+  - 7.2.5
+  now: '2026-11-29T03:00:00Z'

@@ -1937,6 +1937,40 @@ export const zhTW: Messages = {
   "data.addKey": "新增鍵",
   "data.key": "鍵",
   "data.readers": "讀取的服務",
+  "imageUpdates.switch": "自動更新到新的修補版本",
+  "imageUpdates.hint":
+    "在你選的時段裡，映像檔會換成同一版本的最新修補版本，例如 redis 7.2.4 換成 7.2.5。新的次要版本或主要版本會等你決定。",
+  "imageUpdates.on": (window) => `已開啟：${window}檢查。`,
+  "imageUpdates.weekday": (day) =>
+    new Intl.DateTimeFormat("zh-TW", { weekday: "long", timeZone: "UTC" }).format(
+      new Date(Date.UTC(2024, 0, 1 + day)),
+    ),
+  "imageUpdates.every": (days) => `每${days}`,
+  "imageUpdates.everyDay": "每天",
+  "imageUpdates.hours": (n) => `${n} 小時`,
+  "imageUpdates.window": (days, start, length, zone) => `${days} ${start} 起 ${length}（${zone}）`,
+  "imageUpdates.days": "日期",
+  "imageUpdates.daily": "每天",
+  "imageUpdates.start": "開始時間",
+  "imageUpdates.length": "持續",
+  "imageUpdates.zoneHint": "IANA 時區，例如 Asia/Taipei；夏令時間依時區自動調整。",
+  "imageUpdates.saveWindow": "變更時段",
+  "imageUpdates.updating": (to) => `正在更新到 ${to}：等待新的副本。`,
+  "imageUpdates.updated": (from, to, at) => `已在 ${at} 從 ${from} 更新到 ${to}。`,
+  "imageUpdates.late": (name) => `${name} 的新副本沒有及時就緒。`,
+  "imageUpdates.rolledBack": (from, tag) => `已換回 ${from}，之後不會再試 ${tag}。`,
+  "imageUpdates.failed": (to, reason) =>
+    `${to} 沒有啟動，也無法回滾（${reason}）。請從「部署」回滾。`,
+  "imageUpdates.superseded": (to) => `更新到 ${to} 的過程中服務被改動，已不再追蹤這次更新。`,
+  "imageUpdates.upToDate": (at) => `${at} 沒有更新的修補版本。`,
+  "imageUpdates.awaiting": (tag) =>
+    `${tag} 已推出。新的次要版本或主要版本要由你決定：準備好時再換映像檔。`,
+  "imageUpdates.how": "運作方式",
+  "imageUpdates.mechanism":
+    "由叢集管理員開啟的 Zeabur 映像檔更新程式（Zeabur chart 的 imageUpdates.enabled）會在每個時段讀取映像檔倉庫的標籤、設定映像檔、追蹤部署進度，卡住時就回滾。部署失敗時，也會和其他部署一樣通知這個專案的通知管道。",
+  "confirm.imageUpdatesOn": (name, window) => `${window}把 ${name} 更新到新的修補版本。`,
+  "confirm.imageUpdatesOff": (name) => `停止自動更新 ${name}。`,
+  "title.imageUpdates": (service) => `${service} 的自動更新`,
   "reload.switch": "設定檔或機密變數變更時自動重新啟動",
   "reload.hint":
     "改這個服務的變數、映像檔或資源，會馬上重新部署。改服務用到的設定檔或機密變數，要重新啟動才會生效；開啟這個選項就會自動重新啟動。",

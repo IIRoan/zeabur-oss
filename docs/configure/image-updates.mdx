@@ -1,0 +1,69 @@
+---
+title: Update images automatically
+description: Let services such as Redis and PostgreSQL move to new patch releases in a window you choose, and roll back on their own when one fails.
+---
+
+Once it's on, the service moves to the newest patch release of its version in the window you choose, such as `redis:7.2.4` to `redis:7.2.5`. If the new replicas don't start, it rolls back to the version it had, and that version isn't tried again. New minor and major versions never move on their own: the service's **Settings** tell you when one is out.
+
+## Before you start
+
+- A cluster administrator turns on `imageUpdates.enabled` in Zeabur's Helm chart. Without it, the setting here is kept but nothing updates.
+- The service is a Deployment or StatefulSet with one container, and its image tag has the form `X.Y.Z`, such as `redis:7.2.4` or `redis:7.2.4-alpine`.
+- Services that Helm, Argo CD, Flux or a database operator manages can't turn this on here: update their image in that tool. A service built from Git with **Auto-deploy new builds** on is updated by that setting instead.
+- You need permission to modify services in the project.
+
+## Turn on automatic updates
+
+<Steps>
+<Step>
+
+### Choose the window
+
+Open the service's **Settings** and find **Update to new patch releases automatically**. Choose the **Days**, when it **Starts at**, how long it's **Open for**, and the **Time zone**. The time zone is an IANA name, such as `Europe/Amsterdam`; daylight saving time follows it.
+
+</Step>
+<Step>
+
+### Turn the switch on
+
+Turn on the switch, then review and apply the change. From then on, each window checks the registry once for a new patch release.
+
+</Step>
+<Step>
+
+### Check what happened
+
+Under the switch, the service says what happened last: which version it updated to, that there was no newer patch release, or that a version got stuck and was rolled back. It also tells you when a new minor or major version is out.
+
+</Step>
+</Steps>
+
+To move the window, change the fields and click **Change window**. To stop updating, turn the switch off.
+
+## How an update goes
+
+1. When the window opens, the registry's tags are read and the newest patch release of the same version is chosen. Each window is checked once.
+2. The image is set, and the rollout is followed as **Rollout** in the service's **Overview** follows it.
+3. Once every new replica is ready, the update is done. If a new replica keeps crashing, can't pull its image, or isn't ready by the deadline, the previous version comes back and the failed version isn't tried again.
+
+A failed rollout also reaches the project's notification channels, such as a webhook or Slack, as any other does. Add one under the project's **Settings** → **Notifications** and choose its deployment and crash loop events ([Notifications](../cluster/notifications.mdx)).
+
+## Do the same with kubectl
+
+The setting is one label and one annotation on the workload. The examples below use the StatefulSet `redis` in the project `demo`:
+
+```sh
+kubectl -n demo label statefulset redis zeabur.com/image-updates=patch
+kubectl -n demo annotate statefulset redis zeabur.com/image-update-window='sun 03:00 2h Europe/Amsterdam'
+```
+
+A window is `<days> <start> <length> <time zone>`: the days are `daily` or `mon` to `sun` separated by commas, and the length is `15m` to `24h`. The updater keeps its last result in the `zeabur.com/image-update-status` annotation.
+
+## Troubleshooting
+
+| What you see | What to do next |
+| --- | --- |
+| It's on, but nothing is ever checked | Ask a cluster administrator to turn on `imageUpdates.enabled` in Zeabur's chart. |
+| "The rollout … is stuck … is back" | The new version didn't start for this service. Check **Logs** for why. That version isn't tried again; the next patch release is. |
+| "… is out" but nothing updates | It's a new minor or major version, which is yours to move to. Change the image in **Settings** when you're ready. |
+| Turning it on says the image has no X.Y.Z tag | Change the image to a tag with the full version first, such as `redis:7.2.4` instead of `redis:7` or `latest`. |

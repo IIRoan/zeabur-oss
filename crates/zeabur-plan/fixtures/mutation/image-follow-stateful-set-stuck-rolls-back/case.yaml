@@ -1,0 +1,5 @@
+description: "A StatefulSet whose rollout is stuck is rolled back as a Deployment is."
+operation: mutation.imageFollow
+params:
+  rollout: stuck:crashLoop
+  now: '2026-11-29T03:05:00Z'

@@ -1,0 +1,9 @@
+description: "Opting out removes the label and the window; the record of earlier updates stays."
+operation: mutation.plan
+params:
+  request:
+    changes:
+    - op: imageUpdates
+      workload:
+        kind: Deployment
+        name: cache

@@ -5,6 +5,14 @@ people in through Zeabur Identity. Every request to the cluster carries the toke
 it. Zeabur OSS's own service account is used only for tools pods in the terminal namespace, after
 kube-apiserver says the person may run commands in the project's pods (see `zeabur_api::tools`).
 
+## Updating images
+
+`zeabur image-updates` is the image updater the chart runs when `imageUpdates.enabled` is set: as
+its own service account, every `--interval` (default `30s`), it moves each workload opted in with
+the label `zeabur.com/image-updates: patch` to the newest patch release of its image within the
+workload's window, follows the rollout through the API, and rolls a stuck one back with the
+rollout report's plan (`zeabur_plan::image_update`; `docs/internal/image-updates.md`).
+
 ## Installing components
 
 `zeabur components install <id>…` does what **Cluster → Components** does, in the same process,

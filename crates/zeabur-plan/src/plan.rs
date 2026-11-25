@@ -476,6 +476,9 @@ impl<'a> Planner<'a> {
                 build,
                 webhook,
             } => self.auto_update(workload, *enabled, build.as_deref(), webhook.as_deref()),
+            Change::ImageUpdates { workload, window } => {
+                self.image_updates(workload, window.as_deref())
+            }
             Change::Scale { workload, replicas } => self.scale(workload, *replicas),
             Change::ConfigReload { workload, enabled } => self.config_reload(workload, *enabled),
             Change::SecurityProfile { workload, profile } => {

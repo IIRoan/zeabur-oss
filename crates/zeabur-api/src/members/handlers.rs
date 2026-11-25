@@ -330,7 +330,7 @@ impl SetupLinkView {
     pub(crate) const fn new(
         url: String,
         username: String,
-        expires_at: zeabur_kube::k8s_openapi::jiff::Timestamp,
+        expires_at: jiff::Timestamp,
         name: String,
         created_member: bool,
         reset: bool,

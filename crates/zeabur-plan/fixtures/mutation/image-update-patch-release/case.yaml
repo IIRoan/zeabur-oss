@@ -1,0 +1,13 @@
+description: "Redis 7.2.4 moves to the highest 7.2 patch release; a release candidate, another form of tag and later minor or major releases do not move it, and 8.0.0 waits for a person."
+operation: mutation.imageUpdate
+params:
+  tags:
+  - 7.2.3
+  - 7.2.4
+  - 7.2.5
+  - 7.2.6-rc1
+  - 7.3.0
+  - 8.0.0
+  - latest
+  - '7.2'
+  now: '2026-11-29T03:00:00Z'

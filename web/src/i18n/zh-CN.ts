@@ -1933,6 +1933,40 @@ export const zhCN: Messages = {
   "data.addKey": "添加键",
   "data.key": "键",
   "data.readers": "读取的服务",
+  "imageUpdates.switch": "自动更新到新的补丁版本",
+  "imageUpdates.hint":
+    "在你选的时段里，镜像会换成同一版本的最新补丁版本，例如 redis 7.2.4 换成 7.2.5。新的次版本或主版本会等你决定。",
+  "imageUpdates.on": (window) => `已开启：${window}检查。`,
+  "imageUpdates.weekday": (day) =>
+    new Intl.DateTimeFormat("zh-CN", { weekday: "long", timeZone: "UTC" }).format(
+      new Date(Date.UTC(2024, 0, 1 + day)),
+    ),
+  "imageUpdates.every": (days) => `每${days}`,
+  "imageUpdates.everyDay": "每天",
+  "imageUpdates.hours": (n) => `${n} 小时`,
+  "imageUpdates.window": (days, start, length, zone) => `${days} ${start} 起 ${length}（${zone}）`,
+  "imageUpdates.days": "日期",
+  "imageUpdates.daily": "每天",
+  "imageUpdates.start": "开始时间",
+  "imageUpdates.length": "持续",
+  "imageUpdates.zoneHint": "IANA 时区，例如 Asia/Shanghai；夏令时按时区自动调整。",
+  "imageUpdates.saveWindow": "更改时段",
+  "imageUpdates.updating": (to) => `正在更新到 ${to}：等待新的副本。`,
+  "imageUpdates.updated": (from, to, at) => `已在 ${at} 从 ${from} 更新到 ${to}。`,
+  "imageUpdates.late": (name) => `${name} 的新副本没有及时就绪。`,
+  "imageUpdates.rolledBack": (from, tag) => `已换回 ${from}，之后不会再试 ${tag}。`,
+  "imageUpdates.failed": (to, reason) =>
+    `${to} 没有启动，也无法回滚（${reason}）。请从“部署”回滚。`,
+  "imageUpdates.superseded": (to) => `更新到 ${to} 的过程中服务被改动，已不再跟踪这次更新。`,
+  "imageUpdates.upToDate": (at) => `${at} 没有更新的补丁版本。`,
+  "imageUpdates.awaiting": (tag) =>
+    `${tag} 已发布。新的次版本或主版本要由你决定：准备好时再换镜像。`,
+  "imageUpdates.how": "工作方式",
+  "imageUpdates.mechanism":
+    "由集群管理员开启的 Zeabur 镜像更新程序（Zeabur chart 的 imageUpdates.enabled）会在每个时段读取镜像仓库的标签、设置镜像、跟踪部署进度，卡住时就回滚。部署失败时，也会和其他部署一样通知这个项目的通知渠道。",
+  "confirm.imageUpdatesOn": (name, window) => `${window}把 ${name} 更新到新的补丁版本。`,
+  "confirm.imageUpdatesOff": (name) => `停止自动更新 ${name}。`,
+  "title.imageUpdates": (service) => `${service} 的自动更新`,
   "reload.switch": "配置文件或机密变量变更时自动重启",
   "reload.hint":
     "改这个服务的变量、镜像或资源，会马上重新部署。改服务用到的配置文件或机密变量，要重启才会生效；打开这个选项就会自动重启。",

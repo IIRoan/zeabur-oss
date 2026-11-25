@@ -1,0 +1,7 @@
+description: "A StatefulSet with OnDelete is refused: its pods take a new template only when deleted."
+operation: mutation.imageUpdate
+params:
+  tags:
+  - 7.2.4
+  - 7.2.5
+  now: '2026-11-29T03:00:00Z'

@@ -4,6 +4,7 @@ use std::collections::BTreeMap;
 
 use k8s_openapi::api::apps::v1::ReplicaSet;
 use k8s_openapi::jiff::Timestamp;
+use k8s_openapi::jiff::tz::TimeZone;
 use serde::{Deserialize, Deserializer};
 use serde_json::{Value, from_value, json, to_value};
 use zeabur_graph::Snapshot;
@@ -12,6 +13,7 @@ use zeabur_plan::checks::{
     ProbeRequest, ResourceRef, VolumeRequest, probe_config, reconcile_identity, resource_allowed,
     validate_storage,
 };
+use zeabur_plan::image_update::{Rollout, follow, image_update};
 use zeabur_plan::rules::{EnvEdit, diff, route_name, validate_env, validate_hostname};
 use zeabur_plan::{
     Attachable, CheckedCertificate, Fetched, Input, IssuerRead, PlanRequest, Release, ServedKind,
@@ -35,6 +37,8 @@ pub(crate) fn run(fixture: &Fixture) -> Result<Value, String> {
         ResourceAllowed::NAME => run_op::<ResourceAllowed>(fixture),
         ReconcileIdentity::NAME => run_op::<ReconcileIdentity>(fixture),
         Plan::NAME => run_op::<Plan>(fixture),
+        ImageUpdate::NAME => run_op::<ImageUpdate>(fixture),
+        ImageFollow::NAME => run_op::<ImageFollow>(fixture),
         other => Err(format!("{}: no runner for operation {other}", fixture.name)),
     }
 }
@@ -176,6 +180,64 @@ impl FixtureOp for ProbeConfig {
             .filter_map(|p| i32::try_from(p).ok())
             .collect();
         outcome(probe_config(&params.probe.0, &ports))
+    }
+}
+
+/// The zones the cases name, by their POSIX rules, so the cases need no time zone database.
+fn zone(name: &str) -> Option<TimeZone> {
+    match name {
+        "UTC" => Some(TimeZone::UTC),
+        "Europe/Amsterdam" => TimeZone::posix("CET-1CEST,M3.5.0,M10.5.0/3").ok(),
+        _ => None,
+    }
+}
+
+struct ImageUpdate;
+
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct ImageUpdateParams {
+    tags: Vec<String>,
+    now: Timestamp,
+}
+
+impl FixtureOp for ImageUpdate {
+    const NAME: &'static str = "mutation.imageUpdate";
+    type Params = ImageUpdateParams;
+
+    fn run(input: &[Value], params: Self::Params) -> Result<Value, String> {
+        let [workload] = input else {
+            return Err("one workload".to_owned());
+        };
+        outcome(image_update(workload, &params.tags, &zone, params.now).map_err(|e| e.code))
+    }
+}
+
+struct ImageFollow;
+
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct ImageFollowParams {
+    /// `done`, `progressing` or `stuck:<reason>`.
+    rollout: String,
+    now: Timestamp,
+}
+
+impl FixtureOp for ImageFollow {
+    const NAME: &'static str = "mutation.imageFollow";
+    type Params = ImageFollowParams;
+
+    fn run(input: &[Value], params: Self::Params) -> Result<Value, String> {
+        let [workload] = input else {
+            return Err("one workload".to_owned());
+        };
+        let rollout = match params.rollout.split_once(':') {
+            Some(("stuck", reason)) => Rollout::Stuck(reason.to_owned()),
+            None if params.rollout == "done" => Rollout::Done,
+            None if params.rollout == "progressing" => Rollout::Progressing,
+            _ => return Err(format!("no rollout {}", params.rollout)),
+        };
+        outcome(follow(workload, &rollout, params.now).map_err(|e| e.code))
     }
 }
 

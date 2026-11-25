@@ -1,0 +1,10 @@
+description: "Moving the window replaces the annotation, testing the one read; the label stays."
+operation: mutation.plan
+params:
+  request:
+    changes:
+    - op: imageUpdates
+      workload:
+        kind: Deployment
+        name: cache
+      window: daily 02:00 1h UTC

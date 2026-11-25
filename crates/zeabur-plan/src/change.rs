@@ -272,6 +272,18 @@ pub enum Change {
         #[serde(default, skip_serializing_if = "Option::is_none")]
         webhook: Option<String>,
     },
+    /// Have the image updater move a workload to each new patch release of its image within a
+    /// window, or stop it (see the `image_update` module).
+    #[serde(rename_all = "camelCase")]
+    ImageUpdates {
+        /// The workload: a Deployment or StatefulSet.
+        workload: WorkloadRef,
+        /// When it may be updated, such as `sun 03:00 2h Europe/Amsterdam`: days (`daily`, or
+        /// `mon` to `sun` separated by commas), the local start, how long it stays open (15
+        /// minutes to a day) and an IANA time zone. Absent: it is updated by hand only.
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        window: Option<String>,
+    },
     /// Run this many pods of a Deployment or StatefulSet.
     #[serde(rename_all = "camelCase")]
     Scale {

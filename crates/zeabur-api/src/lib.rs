@@ -486,7 +486,7 @@ pub struct Options {
     /// Zeabur's settings (see [`settings`]).
     pub settings: Settings,
     /// The time now.
-    pub clock: fn() -> zeabur_kube::k8s_openapi::jiff::Timestamp,
+    pub clock: fn() -> jiff::Timestamp,
     /// The key plan tokens are sealed with; a key read from a file outlives a restart.
     pub plan_key: Option<Arc<PlanKey>>,
     /// How long a terminal may idle before the server closes it.
@@ -523,7 +523,7 @@ impl Default for Options {
     fn default() -> Self {
         Self {
             settings: Settings::default(),
-            clock: zeabur_kube::k8s_openapi::jiff::Timestamp::now,
+            clock: jiff::Timestamp::now,
             plan_key: PlanKey::random().ok().map(Arc::new),
             terminal_idle: pods::exec::IDLE,
             resolver: Arc::new(resolve::System),

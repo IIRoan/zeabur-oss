@@ -279,6 +279,20 @@ catalog:
 components:
   install: [cert-manager]
 
+# Automatic image updates (docs/configure/image-updates.mdx): a Deployment of its own runs
+# `zeabur image-updates`, which moves each workload a person opted in to the newest patch release
+# of its image within that workload's window, follows the rollout and rolls a failed one back. Its
+# service account reads projects as a viewer (memberRoles.enabled) and patches Deployments and
+# StatefulSets; an admission policy holds those patches to opted-in workloads. A rollout that fails
+# reaches the project's notification channels as any other does (crash-loop, deploy-failed). Off:
+# nothing is installed and opted-in workloads keep their images.
+imageUpdates:
+  enabled: false
+  interval: 30s
+  resources:
+    requests: {cpu: 10m, memory: 32Mi}
+    limits: {memory: 128Mi}
+
 # Template updates (docs/reference/telemetry.mdx): every 6 hours at most, Zeabur fetches Zeabur
 # Catalog's newest templates from catalog.url and offers them in place of the ones it was built
 # with. It trusts the address it fetches from. DO_NOT_TRACK does not turn it off.

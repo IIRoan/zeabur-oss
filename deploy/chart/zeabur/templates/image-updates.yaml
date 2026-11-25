@@ -1,0 +1,190 @@
+{{- with .Values.imageUpdates }}
+{{- if .enabled }}
+{{- if not $.Values.memberRoles.enabled }}
+{{- fail "imageUpdates.enabled needs memberRoles.enabled: the updater reads projects with the zeabur-project-viewer role" }}
+{{- end }}
+{{- $name := printf "%s-image-updater" (include "zeabur.fullname" $) }}
+# The image updater (crates/zeabur/src/image_updates.rs). Its rights: the project viewer's reads
+# and a member's (files/member-roles.yaml), in every namespace, and patching Deployments and
+# StatefulSets, which the policy below holds to opted-in workloads.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{ $name }}
+  namespace: {{ $.Release.Namespace }}
+  labels:
+    {{- include "zeabur.labels" $ | nindent 4 }}
+automountServiceAccountToken: false
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ $name }}
+  labels:
+    {{- include "zeabur.labels" $ | nindent 4 }}
+rules:
+  - apiGroups: [apps]
+    resources: [deployments, statefulsets]
+    verbs: [patch]
+{{- range $role := list $name "zeabur-project-viewer" "zeabur-member" }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: {{ $name }}{{ if ne $role $name }}-{{ trimPrefix "zeabur-" $role }}{{ end }}
+  labels:
+    {{- include "zeabur.labels" $ | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: {{ $role }}
+subjects:
+  - kind: ServiceAccount
+    name: {{ $name }}
+    namespace: {{ $.Release.Namespace }}
+{{- end }}
+---
+# The updater changes only workloads opted in before and after its patch, keeps their replicas,
+# pod-level settings, volumes and each container's repository, command, environment, mounts and
+# security context: an update or its rollback moves images, nothing else.
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingAdmissionPolicy
+metadata:
+  name: {{ $name }}
+  labels:
+    {{- include "zeabur.labels" $ | nindent 4 }}
+spec:
+  failurePolicy: Fail
+  matchConstraints:
+    resourceRules:
+      - apiGroups: [apps]
+        apiVersions: [v1]
+        operations: [UPDATE]
+        resources: [deployments, statefulsets]
+  matchConditions:
+    - name: the-updater
+      expression: >-
+        request.userInfo.username == "system:serviceaccount:{{ $.Release.Namespace }}:{{ $name }}"
+  variables:
+    - name: before
+      expression: oldObject.spec.template.spec
+    - name: after
+      expression: object.spec.template.spec
+  validations:
+    - expression: >-
+        oldObject.metadata.?labels[?'zeabur.com/image-updates'].orValue('') == 'patch' &&
+        object.metadata.?labels[?'zeabur.com/image-updates'].orValue('') == 'patch'
+      reason: Forbidden
+      message: The image updater changes only workloads opted in to image updates.
+    - expression: >-
+        object.spec.?replicas == oldObject.spec.?replicas &&
+        object.spec.template.metadata == oldObject.spec.template.metadata &&
+        variables.after.?initContainers == variables.before.?initContainers &&
+        variables.after.?volumes == variables.before.?volumes &&
+        variables.after.?securityContext == variables.before.?securityContext &&
+        variables.after.?serviceAccountName == variables.before.?serviceAccountName &&
+        variables.after.?hostNetwork == variables.before.?hostNetwork &&
+        variables.after.?hostPID == variables.before.?hostPID &&
+        variables.after.?nodeName == variables.before.?nodeName
+      reason: Forbidden
+      message: The image updater changes images only.
+    - expression: >-
+        variables.after.containers.size() == variables.before.containers.size() &&
+        variables.after.containers.all(c, variables.before.containers.exists(o,
+          o.name == c.name &&
+          o.image.lastIndexOf(':') > o.image.lastIndexOf('/') &&
+          c.image.lastIndexOf(':') > c.image.lastIndexOf('/') &&
+          o.image.substring(0, o.image.lastIndexOf(':')) ==
+            c.image.substring(0, c.image.lastIndexOf(':')) &&
+          o.?command == c.?command && o.?args == c.?args && o.?env == c.?env &&
+          o.?envFrom == c.?envFrom && o.?volumeMounts == c.?volumeMounts &&
+          o.?securityContext == c.?securityContext))
+      reason: Forbidden
+      message: The image updater keeps each container's repository and settings.
+---
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingAdmissionPolicyBinding
+metadata:
+  name: {{ $name }}
+  labels:
+    {{- include "zeabur.labels" $ | nindent 4 }}
+spec:
+  policyName: {{ $name }}
+  validationActions: [Deny]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $name }}
+  namespace: {{ $.Release.Namespace }}
+  labels:
+    {{- include "zeabur.labels" $ | nindent 4 }}
+    app.kubernetes.io/component: image-updater
+spec:
+  # One updater: two would check each window twice, though their writes test what they read.
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      {{- include "zeabur.selectorLabels" $ | nindent 6 }}
+      app.kubernetes.io/component: image-updater
+  template:
+    metadata:
+      labels:
+        {{- include "zeabur.labels" $ | nindent 8 }}
+        app.kubernetes.io/component: image-updater
+    spec:
+      serviceAccountName: {{ $name }}
+      automountServiceAccountToken: false
+      enableServiceLinks: false
+      {{- with $.Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with $.Values.priorityClassName }}
+      priorityClassName: {{ . | quote }}
+      {{- end }}
+      securityContext:
+        {{- toYaml $.Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: image-updater
+          image: {{ include "zeabur.image" $ | quote }}
+          imagePullPolicy: {{ $.Values.image.pullPolicy }}
+          args: [image-updates, --interval, {{ .interval | quote }}]
+          {{- with include "zeabur.outboundEnv" $ }}
+          env:
+            {{- . | trim | nindent 12 }}
+          {{- end }}
+          resources:
+            {{- toYaml .resources | nindent 12 }}
+          securityContext:
+            {{- toYaml $.Values.securityContext | nindent 12 }}
+          volumeMounts:
+            - name: kube-api
+              mountPath: /var/run/secrets/kubernetes.io/serviceaccount
+              readOnly: true
+            {{- with include "zeabur.extraCaMount" $ }}{{ . | trim | nindent 12 }}{{- end }}
+      volumes:
+        # Its own token, which kubelet renews, with the CA and the namespace, where in-cluster
+        # clients read them.
+        - name: kube-api
+          projected:
+            defaultMode: 0444
+            sources:
+              - serviceAccountToken:
+                  path: token
+                  expirationSeconds: 3600
+              - configMap:
+                  name: kube-root-ca.crt
+                  items:
+                    - key: ca.crt
+                      path: ca.crt
+              - downwardAPI:
+                  items:
+                    - path: namespace
+                      fieldRef:
+                        fieldPath: metadata.namespace
+        {{- with include "zeabur.extraCaVolume" $ }}{{ . | trim | nindent 8 }}{{- end }}
+{{- end }}
+{{- end }}

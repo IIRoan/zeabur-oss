@@ -1,0 +1,22 @@
+{
+  "container": "redis",
+  "image": null,
+  "operations": [
+    {
+      "op": "test",
+      "path": "/metadata/uid",
+      "value": "6f3d0c52-2a4e-4f7e-9d61-0c8a5b1e2f40"
+    },
+    {
+      "op": "test",
+      "path": "/metadata/resourceVersion",
+      "value": "41"
+    },
+    {
+      "op": "add",
+      "path": "/metadata/annotations/zeabur.com~1image-update-status",
+      "value": "{\"checked\":\"2026-11-29T02:00:00Z\",\"awaiting\":\"8.0.1\"}"
+    }
+  ],
+  "awaiting": "8.0.1"
+}

@@ -1,0 +1,7 @@
+description: "A Deployment Flux applies is refused: its next sync would restore the image."
+operation: mutation.imageUpdate
+params:
+  tags:
+  - 7.2.4
+  - 7.2.5
+  now: '2026-11-29T03:00:00Z'

@@ -1,0 +1,5 @@
+description: "While the rollout is going and the deadline has not passed, there is nothing to write."
+operation: mutation.imageFollow
+params:
+  rollout: progressing
+  now: '2026-11-29T03:05:00Z'

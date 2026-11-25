@@ -1,0 +1,7 @@
+description: "A workload Keel updates (auto-deploy of builds sets keel.sh/policy) is left to Keel."
+operation: mutation.imageUpdate
+params:
+  tags:
+  - 7.2.4
+  - 7.2.5
+  now: '2026-11-29T03:00:00Z'

@@ -44,6 +44,8 @@ const DEADLINE: Duration = Duration::from_secs(10);
 const KEEP: Duration = Duration::from_mins(5);
 /// How many answers are kept.
 const KEPT: usize = 256;
+/// How long reading every page of a tag list may take.
+const TAGS_DEADLINE: Duration = Duration::from_mins(1);
 /// Read when the nodes' architectures are not known.
 const FALLBACK: [&str; 2] = ["amd64", "arm64"];
 
@@ -114,6 +116,34 @@ impl Inspector {
             reach,
             extra: Extra::Https { trusted_ca },
             ..Self::new(transport, insecure)
+        }
+    }
+
+    /// The tags of `image`'s repository, read anonymously, for the image updater.
+    ///
+    /// # Errors
+    ///
+    /// Why they could not be read, in words: `image` is no image reference, or the registry has no
+    /// such repository, wants credentials, does not answer or answers what Zeabur cannot read.
+    pub async fn tags(&self, image: &str) -> Result<Vec<String>, String> {
+        let reference =
+            Reference::parse(image).ok_or_else(|| format!("{image} is not an image reference"))?;
+        let read = registry::tags(
+            self.transport.as_ref(),
+            &reference,
+            self.base(&reference, false),
+            None,
+        );
+        match tokio::time::timeout(TAGS_DEADLINE, read).await {
+            Ok(Ok(tags)) => Ok(tags),
+            Ok(Err(why)) => Err(match why {
+                Unreadable::NotFound => "the registry has no such repository".to_owned(),
+                Unreadable::Unauthorized => "the registry wants credentials".to_owned(),
+                Unreadable::NoPlatform(why)
+                | Unreadable::Unreachable(why)
+                | Unreadable::Unexpected(why) => why,
+            }),
+            Err(_elapsed) => Err("the registry did not answer in time".to_owned()),
         }
     }
 

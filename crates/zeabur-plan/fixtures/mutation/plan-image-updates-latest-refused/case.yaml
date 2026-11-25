@@ -1,0 +1,10 @@
+description: "An image without an X.Y.Z tag has no patch release to move to."
+operation: mutation.plan
+params:
+  request:
+    changes:
+    - op: imageUpdates
+      workload:
+        kind: Deployment
+        name: cache
+      window: sun 03:00 2h Europe/Amsterdam

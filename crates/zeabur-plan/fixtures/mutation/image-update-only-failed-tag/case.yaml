@@ -1,0 +1,7 @@
+description: "When the only newer patch release is the one that failed, the image stays."
+operation: mutation.imageUpdate
+params:
+  tags:
+  - 7.2.4
+  - 7.2.5
+  now: '2026-11-29T03:00:00Z'

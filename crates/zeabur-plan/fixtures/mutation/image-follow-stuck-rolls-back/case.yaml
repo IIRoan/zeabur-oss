@@ -1,0 +1,5 @@
+description: "A stuck rollout is rolled back with the report's plan, after 7.2.5 is recorded as failed so it is not tried again."
+operation: mutation.imageFollow
+params:
+  rollout: stuck:crashLoop
+  now: '2026-11-29T03:05:00Z'

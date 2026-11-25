@@ -468,6 +468,7 @@ pub(crate) async fn open(
             | Change::ArchiveDigest { .. }
             | Change::BuildOptions(_)
             | Change::AutoUpdate { .. }
+            | Change::ImageUpdates { .. }
             | Change::Scale { .. }
             | Change::Resources { .. }
             | Change::SecurityProfile { .. }

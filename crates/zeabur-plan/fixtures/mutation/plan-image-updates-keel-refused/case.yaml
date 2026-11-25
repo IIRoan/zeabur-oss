@@ -1,0 +1,10 @@
+description: "A workload Keel updates, as auto-deploy of builds does, is not opted in as well."
+operation: mutation.plan
+params:
+  request:
+    changes:
+    - op: imageUpdates
+      workload:
+        kind: Deployment
+        name: cache
+      window: sun 03:00 2h Europe/Amsterdam

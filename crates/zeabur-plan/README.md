@@ -12,6 +12,11 @@ so an apply carries out exactly what was confirmed, or nothing; this crate defin
 The `compose` module reads a Docker Compose file as the services, volumes and variables it
 makes, and lists the fields it leaves out.
 
+The `image_update` module holds the rules of automatic image updates: whether an opted-in
+workload may move to a newer patch release of its image in its window, the write that moves it,
+and where its rollout stands; `zeabur image-updates` follows them
+([image updates](../../docs/internal/image-updates.md)).
+
 ## Hides
 
 How an edit maps to fields and to a write. Zeabur OSS writes as the field manager `zeabur`, sends

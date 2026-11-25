@@ -40,6 +40,11 @@ const MANIFEST_TYPES: [&str; 2] = [
 const MANIFEST_LIMIT: usize = 4 * 1024 * 1024;
 const CONFIG_LIMIT: usize = 4 * 1024 * 1024;
 const TOKEN_LIMIT: usize = 1024 * 1024;
+/// The largest page of a tag list.
+const TAGS_LIMIT: usize = 4 * 1024 * 1024;
+/// How many pages of a tag list are read: Docker Hub's largest repositories have tens of
+/// thousands of tags.
+const TAG_PAGES: usize = 50;
 const REDIRECTS: usize = 3;
 
 /// One `GET`.
@@ -76,6 +81,8 @@ pub struct Answer {
     pub location: Option<String>,
     /// `Content-Type`.
     pub content_type: Option<String>,
+    /// `Link`, which names a list's next page.
+    pub link: Option<String>,
     /// The body.
     pub body: Vec<u8>,
 }
@@ -235,6 +242,57 @@ pub(crate) async fn inspect(
         digest,
         exposed_ports: ports(inner.exposed_ports.unwrap_or_default().keys()),
         user: inner.user.unwrap_or_default(),
+    })
+}
+
+/// The tags of `reference`'s repository at `base` (`https://host`), following the list's pages
+/// (`Link: <…>; rel="next"`) on the same registry, up to [`TAG_PAGES`] of them.
+pub(crate) async fn tags(
+    transport: &dyn Transport,
+    reference: &Reference,
+    base: String,
+    credential: Option<&Credential>,
+) -> Result<Vec<String>, Unreadable> {
+    #[derive(Deserialize)]
+    struct Page {
+        #[serde(default)]
+        tags: Option<Vec<String>>,
+    }
+    let mut session = Session {
+        transport,
+        reference,
+        base,
+        credential,
+        authorization: None,
+    };
+    let mut path = format!("/v2/{}/tags/list?n=1000", reference.repository);
+    let mut tags = Vec::new();
+    for _ in 0..TAG_PAGES {
+        let answer = session.fetch(&path, "application/json", TAGS_LIMIT).await?;
+        let page: Page = parse(&answer.body)?;
+        tags.extend(page.tags.unwrap_or_default());
+        match answer
+            .link
+            .as_deref()
+            .and_then(|l| next_page(l, &session.base))
+        {
+            Some(next) => path = next,
+            None => break,
+        }
+    }
+    Ok(tags)
+}
+
+/// The path of the next page a `Link` header names, when it is on `base`'s registry.
+fn next_page(link: &str, base: &str) -> Option<String> {
+    link.split(',').find_map(|part| {
+        let (target, params) = part.trim().split_once(';')?;
+        let next = params
+            .split(';')
+            .any(|p| p.trim().trim_start_matches("rel=").trim_matches('"') == "next");
+        let target = target.trim().strip_prefix('<')?.strip_suffix('>')?;
+        let path = target.strip_prefix(base).unwrap_or(target);
+        (next && path.starts_with("/v2/")).then(|| path.to_owned())
     })
 }
 
@@ -829,6 +887,50 @@ mod tests {
             &architectures,
         )
         .await
+    }
+
+    #[tokio::test]
+    async fn a_tag_list_is_read_page_by_page_on_its_registry_only() {
+        let page = |tags: &[&str], link: Option<&str>| Answer {
+            status: 200,
+            content_type: Some("application/json".to_owned()),
+            link: link.map(str::to_owned),
+            body: serde_json::to_vec(&serde_json::json!({"name": "library/redis", "tags": tags}))
+                .unwrap_or_default(),
+            ..Answer::default()
+        };
+        let mut registry = Registry::default();
+        let first = format!("{REGISTRY}/v2/library/redis/tags/list?n=1000");
+        let second = "/v2/library/redis/tags/list?last=7.2.4&n=1000";
+        registry.routes.insert(
+            first,
+            page(
+                &["7.2.3", "7.2.4"],
+                Some(&format!("<{second}>; rel=\"next\"")),
+            ),
+        );
+        registry.routes.insert(
+            format!("{REGISTRY}{second}"),
+            page(
+                &["7.2.5"],
+                Some(
+                    "<https://elsewhere.test/v2/library/redis/tags/list?last=7.2.5>; rel=\"next\"",
+                ),
+            ),
+        );
+        let tags = tags(&registry, &reference("redis"), REGISTRY.to_owned(), None).await;
+        assert_eq!(
+            tags,
+            Ok(vec![
+                "7.2.3".to_owned(),
+                "7.2.4".to_owned(),
+                "7.2.5".to_owned()
+            ])
+        );
+        assert!(
+            registry.sent().iter().all(|g| !g.url.contains("elsewhere")),
+            "a page on another host was read"
+        );
     }
 
     #[tokio::test]

@@ -1,0 +1,8 @@
+description: "A patch release whose rollout failed before is not tried again; a newer one is."
+operation: mutation.imageUpdate
+params:
+  tags:
+  - 7.2.4
+  - 7.2.5
+  - 7.2.6
+  now: '2026-11-29T03:00:00Z'

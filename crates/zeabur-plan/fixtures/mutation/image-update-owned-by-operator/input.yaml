@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: cache
+  namespace: demo
+  uid: 6f3d0c52-2a4e-4f7e-9d61-0c8a5b1e2f40
+  resourceVersion: '41'
+  generation: 3
+  labels:
+    zeabur.com/image-updates: patch
+  annotations:
+    zeabur.com/image-update-window: sun 03:00 2h Europe/Amsterdam
+  ownerReferences:
+  - apiVersion: databases.spotahome.com/v1
+    kind: RedisFailover
+    name: cache
+    uid: 0b6c2e8a-6d1f-4c39-a0de-3c2f7f8e9a11
+    controller: true
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cache
+  template:
+    metadata:
+      labels:
+        app: cache
+    spec:
+      containers:
+      - name: redis
+        image: redis:7.2.4
+  serviceName: cache
+status:
+  observedGeneration: 3
+  replicas: 1
+  readyReplicas: 1
+  currentReplicas: 1
+  updatedReplicas: 1
+  currentRevision: cache-5d8f7b9c4
+  updateRevision: cache-5d8f7b9c4

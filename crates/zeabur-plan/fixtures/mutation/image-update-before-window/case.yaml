@@ -1,0 +1,7 @@
+description: "One nanosecond before the window opens, nothing is written."
+operation: mutation.imageUpdate
+params:
+  tags:
+  - 7.2.4
+  - 7.2.5
+  now: '2026-11-29T01:59:59.999999999Z'

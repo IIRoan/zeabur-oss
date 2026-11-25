@@ -2099,6 +2099,46 @@ export const en = {
   "data.addKey": "Add key",
   "data.key": "Key",
   "data.readers": "Read by",
+  "imageUpdates.switch": "Update to new patch releases automatically",
+  "imageUpdates.hint":
+    "In a window you choose, the image moves to the newest patch release of its version, such as redis 7.2.4 to 7.2.5. A new minor or major version waits for you.",
+  "imageUpdates.on": (window: string) => `On: checked ${window}.`,
+  "imageUpdates.weekday": (day: number) =>
+    new Intl.DateTimeFormat("en", { weekday: "long", timeZone: "UTC" }).format(
+      new Date(Date.UTC(2024, 0, 1 + day)),
+    ),
+  "imageUpdates.every": (days: string) => `every ${days}`,
+  "imageUpdates.everyDay": "every day",
+  "imageUpdates.hours": (n: number) => (n === 1 ? "1 hour" : `${n} hours`),
+  "imageUpdates.window": (days: string, start: string, length: string, zone: string) =>
+    `${days} at ${start} for ${length} (${zone})`,
+  "imageUpdates.days": "Days",
+  "imageUpdates.daily": "Every day",
+  "imageUpdates.start": "Starts at",
+  "imageUpdates.length": "Open for",
+  "imageUpdates.zoneHint":
+    "An IANA time zone, such as Europe/Amsterdam; daylight saving time follows it.",
+  "imageUpdates.saveWindow": "Change window",
+  "imageUpdates.updating": (to: string) => `Updating to ${to}: waiting for the new replicas.`,
+  "imageUpdates.updated": (from: string, to: string, at: string) =>
+    `Updated from ${from} to ${to} on ${at}.`,
+  "imageUpdates.late": (name: string) => `${name}'s new replicas weren't ready in time.`,
+  "imageUpdates.rolledBack": (from: string, tag: string) =>
+    `${from} is back, and ${tag} won't be tried again.`,
+  "imageUpdates.failed": (to: string, reason: string) =>
+    `${to} didn't start and couldn't be rolled back (${reason}). Roll back from Deployments.`,
+  "imageUpdates.superseded": (to: string) =>
+    `The update to ${to} is no longer followed: the service was changed during it.`,
+  "imageUpdates.upToDate": (at: string) => `No newer patch release on ${at}.`,
+  "imageUpdates.awaiting": (tag: string) =>
+    `${tag} is out. A new minor or major version is yours to move to: change the image when you're ready.`,
+  "imageUpdates.how": "How it works",
+  "imageUpdates.mechanism":
+    "Zeabur's image updater, which a cluster administrator turns on (imageUpdates.enabled in Zeabur's chart), reads the registry's tags in each window, sets the image, follows the rollout, and rolls back when it gets stuck. A failed rollout also reaches this project's notification channels, like any other.",
+  "confirm.imageUpdatesOn": (name: string, window: string) =>
+    `Update ${name} to new patch releases ${window}.`,
+  "confirm.imageUpdatesOff": (name: string) => `Stop updating ${name} automatically.`,
+  "title.imageUpdates": (service: string) => `Automatic updates for ${service}`,
   "reload.switch": "Restart when its config files or secrets change",
   "reload.hint":
     "Changing this service's variables, image or resources redeploys it right away. A change to a config file or secret it uses only takes effect after a restart; turn this on to restart automatically.",

@@ -1,0 +1,8 @@
+description: "With no newer 7.2 patch release the image stays; the check is recorded with 8.0.1 waiting for a person."
+operation: mutation.imageUpdate
+params:
+  tags:
+  - 7.2.4
+  - 7.3.0
+  - 8.0.1
+  now: '2026-11-29T03:00:00Z'

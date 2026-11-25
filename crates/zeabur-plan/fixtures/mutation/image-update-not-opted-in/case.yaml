@@ -1,0 +1,7 @@
+description: "A workload without the label zeabur.com/image-updates: patch is not updated: nothing changes for existing services."
+operation: mutation.imageUpdate
+params:
+  tags:
+  - 7.2.4
+  - 7.2.5
+  now: '2026-11-29T03:00:00Z'

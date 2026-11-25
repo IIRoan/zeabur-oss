@@ -1,0 +1,7 @@
+description: "An opted-in workload without a window is not updated."
+operation: mutation.imageUpdate
+params:
+  tags:
+  - 7.2.4
+  - 7.2.5
+  now: '2026-11-29T03:00:00Z'

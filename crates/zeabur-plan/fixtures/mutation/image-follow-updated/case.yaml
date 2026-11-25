@@ -1,0 +1,5 @@
+description: "Once the rollout report says done, so is the update."
+operation: mutation.imageFollow
+params:
+  rollout: done
+  now: '2026-11-29T03:05:00Z'

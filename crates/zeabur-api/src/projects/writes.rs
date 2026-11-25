@@ -127,6 +127,26 @@ pub struct ApplyResponse {
     pub applied: Vec<Applied>,
 }
 
+/// Refuses an image update window in a time zone the built-in database does not know; a window
+/// that cannot be read at all is the planner's to refuse.
+fn check_time_zones(request: &PlanRequest) -> Result<(), ApiError> {
+    for change in &request.changes {
+        if let Change::ImageUpdates {
+            window: Some(window),
+            ..
+        } = change
+            && let Ok(spec) = window.parse::<zeabur_plan::image_update::WindowSpec>()
+            && jiff::tz::TimeZone::get(spec.zone()).is_err()
+        {
+            return Err(ApiError::from(Problem::new(
+                Kind::Invalid,
+                format!("{} is not a time zone Zeabur knows.", spec.zone()),
+            )));
+        }
+    }
+    Ok(())
+}
+
 pub(crate) fn plan_problem(error: PlanError) -> ApiError {
     let kind = match error.kind {
         _ if error.managed_by.is_some() => Kind::Managed,
@@ -373,6 +393,7 @@ pub(crate) async fn plan(
     };
     let catalog = state.templates.current();
     templates::check_forms(&catalog, &request)?;
+    check_time_zones(&request)?;
     let opened = deploy_keys::open(&project, &request, deploy_keys::KeyPair::Hidden)?;
     let opened = s3_destinations::open(cluster.as_ref(), &project, opened).await?;
     let templates::Opened {

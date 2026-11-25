@@ -436,7 +436,7 @@ mod tests {
         assert_eq!(builds["builds"][0]["problem"]["lasting"], true);
 
         let slow = cluster();
-        let now = zeabur_kube::k8s_openapi::jiff::Timestamp::now().to_string();
+        let now = jiff::Timestamp::now().to_string();
         waiting_service_with(&slow, None, Some(&source_not_ready("ResolveFailed", &now)));
         let service = site(&slow).await;
         assert_eq!(service["status"]["word"], "building", "{service}");
@@ -498,7 +498,7 @@ mod tests {
         assert_eq!(refused["status"]["reason"], "BuildFailed");
         assert_eq!(refused["status"]["word"], "rolloutStuck");
 
-        let now = zeabur_kube::k8s_openapi::jiff::Timestamp::now().to_string();
+        let now = jiff::Timestamp::now().to_string();
         let slow = site(&running(Some(("ResolveFailed", &now)))).await;
         assert_eq!(slow["status"]["health"], "ok", "{slow}");
     }

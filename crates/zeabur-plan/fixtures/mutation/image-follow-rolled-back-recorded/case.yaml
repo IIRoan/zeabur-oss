@@ -1,0 +1,5 @@
+description: "Once the release before is back, the rollback is recorded."
+operation: mutation.imageFollow
+params:
+  rollout: done
+  now: '2026-11-29T03:05:00Z'

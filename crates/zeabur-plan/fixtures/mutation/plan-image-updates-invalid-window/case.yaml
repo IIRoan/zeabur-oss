@@ -1,0 +1,10 @@
+description: "A window that cannot be read is refused before anything is written."
+operation: mutation.plan
+params:
+  request:
+    changes:
+    - op: imageUpdates
+      workload:
+        kind: Deployment
+        name: cache
+      window: sundays at three

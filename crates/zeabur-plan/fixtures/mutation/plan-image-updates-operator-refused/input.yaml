@@ -1,0 +1,28 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: cache
+  namespace: demo
+  uid: 6f3d0c52-2a4e-4f7e-9d61-0c8a5b1e2f40
+  resourceVersion: '41'
+  generation: 3
+  ownerReferences:
+  - apiVersion: databases.spotahome.com/v1
+    kind: RedisFailover
+    name: cache
+    uid: 0b6c2e8a
+    controller: true
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cache
+  template:
+    metadata:
+      labels:
+        app: cache
+    spec:
+      containers:
+      - name: redis
+        image: redis:7.2.4
+  serviceName: cache

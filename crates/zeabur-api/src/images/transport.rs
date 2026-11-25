@@ -38,6 +38,7 @@ async fn send(client: &Https, get: Get) -> Result<Answer, String> {
     let www_authenticate = header(http::header::WWW_AUTHENTICATE);
     let location = header(http::header::LOCATION);
     let content_type = header(http::header::CONTENT_TYPE);
+    let link = header(http::header::LINK);
     let status = response.status().as_u16();
     let body = if status == 200 {
         Limited::new(response.into_body(), get.limit)
@@ -54,6 +55,7 @@ async fn send(client: &Https, get: Get) -> Result<Answer, String> {
         www_authenticate,
         location,
         content_type,
+        link,
         body,
     })
 }

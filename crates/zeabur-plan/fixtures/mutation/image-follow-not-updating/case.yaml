@@ -1,0 +1,5 @@
+description: "A workload with no update followed has nothing to follow."
+operation: mutation.imageFollow
+params:
+  rollout: done
+  now: '2026-11-29T03:05:00Z'

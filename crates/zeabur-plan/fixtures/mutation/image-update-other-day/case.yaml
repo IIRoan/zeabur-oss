@@ -1,0 +1,7 @@
+description: "Outside the days named, nothing is written."
+operation: mutation.imageUpdate
+params:
+  tags:
+  - 7.2.4
+  - 7.2.5
+  now: '2026-11-28T02:30:00Z'

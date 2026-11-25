@@ -11,6 +11,7 @@ mod gap;
 mod health;
 mod http_route;
 pub mod id;
+pub mod image_updates;
 /// Names, quantities, JSON Patch and the values every layer shares.
 pub mod kernel;
 mod network;
@@ -42,6 +43,7 @@ pub use http_route::{
     BackendRef, GATEWAY_GROUP, HttpRoute, HttpRouteMetadata, HttpRouteRule, HttpRouteSpec,
     ParentReference, RouteCondition, RouteParentStatus, RouteStatus,
 };
+pub use image_updates::ImageUpdates;
 pub use network::{
     Endpoint, InferredFrom, Port, PortProtocol, ProtocolInference, Route, RouteMiddleware,
     RouteRule, RouteTls,

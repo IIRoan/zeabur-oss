@@ -17,6 +17,7 @@ import { editCount, partOf } from "@/model/draft"
 import { problemText } from "@/model/problem"
 import { limitSentence } from "@/model/ip-limits"
 import { undoOf, type PodsOf } from "@/model/undo"
+import { parseWindow, windowWords } from "@/model/image-updates"
 import { imageTag } from "@/model/service"
 
 type Change = Schemas.Change
@@ -170,6 +171,20 @@ function mountSentence(t: Translate, change: Extract<Change, { op: "editMount" }
   return t("common.sentences", [moved, mode]) || t("confirm.mount", change.workload.name)
 }
 
+/** Keel's or the image updater's updates turned on or off. */
+function updatesSentence(
+  t: Translate,
+  change: Extract<Change, { op: "autoUpdate" | "imageUpdates" }>,
+): string {
+  const name = change.workload.name
+  if (change.op === "autoUpdate")
+    return t(change.enabled ? "confirm.autoUpdateOn" : "confirm.autoUpdateOff", name)
+  const window = change.window ? parseWindow(change.window) : undefined
+  return window
+    ? t("confirm.imageUpdatesOn", name, windowWords(t, window))
+    : t("confirm.imageUpdatesOff", name)
+}
+
 function settingSentence(
   t: Translate,
   change: Extract<Change, { op: "configReload" | "securityProfile" | "port" }>,
@@ -234,15 +249,13 @@ function sentenceOf(
     case "securityProfile":
     case "port":
       return settingSentence(t, change)
+    case "autoUpdate":
+    case "imageUpdates":
+      return updatesSentence(t, change)
     case "image":
       return t("confirm.image", change.workload.name, imageTag(change.image))
     case "rebuild":
       return t("confirm.rebuild", change.build)
-    case "autoUpdate":
-      return t(
-        change.enabled ? "confirm.autoUpdateOn" : "confirm.autoUpdateOff",
-        change.workload.name,
-      )
     case "scale": {
       if (change.replicas === 0) return t("confirm.scaleZero", change.workload.name)
       const from = podsOf(change.workload)?.desired
@@ -943,6 +956,8 @@ function switchAction(t: Translate, change: Change): string {
   switch (change.op) {
     case "autoUpdate":
       return t(change.enabled ? "action.autoUpdateOn" : "action.autoUpdateOff")
+    case "imageUpdates":
+      return t(change.window ? "action.save" : "action.turnOff")
     case "securityProfile":
       return change.profile === "restricted" ? t("action.makeStrict") : t("action.makeCompatible")
     default:

@@ -1,0 +1,8 @@
+description: "An image with a suffix moves only to a patch release with the same suffix."
+operation: mutation.imageUpdate
+params:
+  tags:
+  - 7.2.5
+  - 7.2.5-alpine
+  - 7.2.6-alpine3.20
+  now: '2026-11-29T03:00:00Z'

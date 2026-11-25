@@ -2345,6 +2345,18 @@ export type Change =
       workload: WorkloadRef
     }
   | {
+      op: "imageUpdates"
+      /**
+       * When it may be updated, such as `sun 03:00 2h Europe/Amsterdam`: days (`daily`, or
+       * `mon` to `sun` separated by commas), the local start, how long it stays open (15
+       * minutes to a day) and an IANA time zone. Absent: it is updated by hand only.
+       * @nullable
+       */
+      window?: string | null
+      /** The workload: a Deployment or StatefulSet. */
+      workload: WorkloadRef
+    }
+  | {
       op: "scale"
       /** The replicas. */
       replicas: number
@@ -7064,6 +7076,84 @@ export type ImageInspection = {
 }
 
 /**
+ * Where the last update is.
+ */
+export type ImageUpdateState = (typeof ImageUpdateState)[keyof typeof ImageUpdateState]
+
+export const ImageUpdateState = {
+  updating: "updating",
+  updated: "updated",
+  rolledBack: "rolledBack",
+  failed: "failed",
+  superseded: "superseded",
+} as const
+
+/**
+ * What the updater last did to a workload, kept in its [`STATUS`] annotation as compact JSON.
+ */
+export type ImageUpdateRecord = {
+  /**
+   * When the last update was written.
+   * @nullable
+   */
+  at?: string | null
+  /**
+   * The highest later minor or major release, which waits for a person.
+   * @nullable
+   */
+  awaiting?: string | null
+  /**
+   * The start of the window occurrence last checked, at most once each.
+   * @nullable
+   */
+  checked?: string | null
+  /**
+   * When the rollout counts as failed if it has not finished by then.
+   * @nullable
+   */
+  deadline?: string | null
+  /**
+   * A tag whose rollout failed, not tried again.
+   * @nullable
+   */
+  failed?: string | null
+  /**
+   * The image before the last update.
+   * @nullable
+   */
+  from?: string | null
+  /**
+   * The workload's `metadata.generation` after that write.
+   * @nullable
+   */
+  generation?: number | null
+  /**
+   * Why the last update failed.
+   * @nullable
+   */
+  reason?: string | null
+  state?: ImageUpdateState | null
+  /**
+   * The image the last update set.
+   * @nullable
+   */
+  to?: string | null
+}
+
+/**
+ * A workload's automatic image updates, as its metadata says.
+ */
+export type ImageUpdates = {
+  /** What the image updater last did. */
+  last: ImageUpdateRecord
+  /**
+   * The window, as the annotation names it, such as `sun 03:00 2h Europe/Amsterdam`; empty
+   * when it names none.
+   */
+  window: string
+}
+
+/**
  * What kind of cluster-side cause an incident is.
  */
 export type IncidentKind = (typeof IncidentKind)[keyof typeof IncidentKind]
@@ -9234,6 +9324,7 @@ export type Service = WorkloadSummary & {
   endpointNames: string[]
   /** Its resource name, `projects/<project>/services/<kind>/<name>`; see [`crate::id`]. */
   id: string
+  imageUpdates?: ImageUpdates | null
   podSecurity?: PodSecurityLevel | null
   /** Its pods, sorted by name. */
   pods: PodSummary[]

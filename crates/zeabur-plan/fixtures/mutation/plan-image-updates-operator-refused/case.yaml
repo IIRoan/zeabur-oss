@@ -1,0 +1,10 @@
+description: "A StatefulSet an operator controls is updated through the operator."
+operation: mutation.plan
+params:
+  request:
+    changes:
+    - op: imageUpdates
+      workload:
+        kind: StatefulSet
+        name: cache
+      window: sun 03:00 2h Europe/Amsterdam

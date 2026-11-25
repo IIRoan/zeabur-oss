@@ -1,0 +1,5 @@
+description: "A workload opted out during the rollout is not rolled back."
+operation: mutation.imageFollow
+params:
+  rollout: stuck:crashLoop
+  now: '2026-11-29T03:05:00Z'

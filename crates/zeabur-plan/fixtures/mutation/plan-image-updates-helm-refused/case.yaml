@@ -1,0 +1,10 @@
+description: "A Deployment Helm manages is opted in through its values, not here."
+operation: mutation.plan
+params:
+  request:
+    changes:
+    - op: imageUpdates
+      workload:
+        kind: Deployment
+        name: cache
+      window: sun 03:00 2h Europe/Amsterdam

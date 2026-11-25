@@ -206,6 +206,15 @@
       "additionalProperties": false,
       "properties": { "enabled": { "type": "boolean" } }
     },
+    "imageUpdates": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "interval": { "type": "string", "pattern": "^[0-9]+(s|m|h)$" },
+        "resources": { "type": "object" }
+      }
+    },
     "templateFetch": {
       "type": "object",
       "additionalProperties": false,

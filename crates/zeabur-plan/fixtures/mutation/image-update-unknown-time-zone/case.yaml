@@ -1,0 +1,7 @@
+description: "A window in a zone that is not known is refused."
+operation: mutation.imageUpdate
+params:
+  tags:
+  - 7.2.4
+  - 7.2.5
+  now: '2026-11-29T03:00:00Z'

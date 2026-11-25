@@ -1,0 +1,7 @@
+description: "An image field Argo CD owns by server-side apply is refused, though no label names Argo CD."
+operation: mutation.imageUpdate
+params:
+  tags:
+  - 7.2.4
+  - 7.2.5
+  now: '2026-11-29T03:00:00Z'

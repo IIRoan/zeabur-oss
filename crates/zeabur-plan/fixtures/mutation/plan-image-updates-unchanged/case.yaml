@@ -1,0 +1,10 @@
+description: "Opting in again with the same window changes nothing."
+operation: mutation.plan
+params:
+  request:
+    changes:
+    - op: imageUpdates
+      workload:
+        kind: Deployment
+        name: cache
+      window: sun 03:00 2h Europe/Amsterdam

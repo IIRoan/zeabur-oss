@@ -121,10 +121,7 @@ async fn customer_key(
 
 /// The name of a new `DownloadRequest`: the backup, the second and a random tail, so that two
 /// downloads in one second do not collide.
-fn request_name(
-    backup: &str,
-    now: &zeabur_kube::k8s_openapi::jiff::Timestamp,
-) -> Result<String, ApiError> {
+fn request_name(backup: &str, now: &jiff::Timestamp) -> Result<String, ApiError> {
     let [a, b, c] = zeabur_core::crypto::random::<3>().map_err(|_random| {
         ApiError::from(Problem::new(
             Kind::Internal,

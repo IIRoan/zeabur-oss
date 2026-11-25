@@ -8,8 +8,10 @@
 
 #![forbid(unsafe_code)]
 
+mod api;
 mod components;
 mod config;
+mod image_updates;
 mod output;
 mod pages;
 mod proxy;
@@ -33,6 +35,7 @@ use zeabur_kube::{ClusterEndpoint, UserClient, UserToken};
 
 use crate::components::ComponentsArgs;
 use crate::config::{Args, Config};
+use crate::image_updates::ImageUpdatesArgs;
 use crate::server::{Auth, Connection, IssuerPage};
 
 /// How often sessions that are over are removed.
@@ -54,9 +57,11 @@ fn log_filter() -> Targets {
         .with_target("kube", LevelFilter::OFF)
 }
 
-/// What the command line asks for: `zeabur components …`, else the server.
+/// What the command line asks for: `zeabur components …`, `zeabur image-updates …`, else the
+/// server.
 enum Command {
     Components(ComponentsArgs),
+    ImageUpdates(ImageUpdatesArgs),
     Serve(Box<Args>),
 }
 
@@ -68,6 +73,11 @@ impl Command {
         if rest.next_if(|first| first == "components").is_some() {
             let program = OsString::from("zeabur components");
             Self::Components(ComponentsArgs::parse_from(
+                std::iter::once(program).chain(rest),
+            ))
+        } else if rest.next_if(|first| first == "image-updates").is_some() {
+            let program = OsString::from("zeabur image-updates");
+            Self::ImageUpdates(ImageUpdatesArgs::parse_from(
                 std::iter::once(program).chain(rest),
             ))
         } else {
@@ -91,6 +101,7 @@ async fn main() -> ExitCode {
     }
     let result = match &command {
         Command::Components(components) => components::run(components).await,
+        Command::ImageUpdates(updates) => image_updates::run(updates).await,
         Command::Serve(args) => match args.check() {
             Ok(config) => serve(args, config).await,
             Err(message) => Err(message),
@@ -106,7 +117,7 @@ async fn main() -> ExitCode {
 }
 
 fn clock() -> Clock {
-    Arc::new(|| zeabur_kube::k8s_openapi::jiff::Timestamp::now().as_second())
+    Arc::new(|| jiff::Timestamp::now().as_second())
 }
 
 /// A client for kube-apiserver that acts as the holder of the token; never Zeabur's own.
@@ -253,7 +264,7 @@ async fn listen(
 
 /// Resolves on Ctrl-C or on SIGTERM, which the kubelet sends to stop a pod
 /// (<https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/#pod-termination>).
-async fn stop_signal() {
+pub(crate) async fn stop_signal() {
     let interrupt = async {
         if let Err(error) = tokio::signal::ctrl_c().await {
             tracing::error!(event = "server.signal", %error, "cannot listen for Ctrl-C");

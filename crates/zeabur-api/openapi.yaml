@@ -6379,6 +6379,29 @@ components:
             $ref: "#/components/schemas/WorkloadRef"
             description: "The workload: a Deployment, StatefulSet or DaemonSet."
       - type: object
+        description: |-
+          Have the image updater move a workload to each new patch release of its image within a
+          window, or stop it (see the `image_update` module).
+        required:
+        - workload
+        - op
+        properties:
+          op:
+            type: string
+            enum:
+            - imageUpdates
+          window:
+            type:
+            - string
+            - "null"
+            description: |-
+              When it may be updated, such as `sun 03:00 2h Europe/Amsterdam`: days (`daily`, or
+              `mon` to `sun` separated by commas), the local start, how long it stays open (15
+              minutes to a day) and an IANA time zone. Absent: it is updated by hand only.
+          workload:
+            $ref: "#/components/schemas/WorkloadRef"
+            description: "The workload: a Deployment or StatefulSet."
+      - type: object
         description: Run this many pods of a Deployment or StatefulSet.
         required:
         - workload
@@ -11278,6 +11301,90 @@ components:
           - $ref: "#/components/schemas/WaitFor"
             description: Hosts and ports an init container waits for before the app starts.
           - type: "null"
+    ImageUpdateRecord:
+      type: object
+      description: >-
+        What the updater last did to a workload, kept in its [`STATUS`] annotation as
+        compact JSON.
+      properties:
+        at:
+          type:
+          - string
+          - "null"
+          format: date-time
+          description: When the last update was written.
+        awaiting:
+          type:
+          - string
+          - "null"
+          description: The highest later minor or major release, which waits for a person.
+        checked:
+          type:
+          - string
+          - "null"
+          format: date-time
+          description: The start of the window occurrence last checked, at most once each.
+        deadline:
+          type:
+          - string
+          - "null"
+          format: date-time
+          description: When the rollout counts as failed if it has not finished by then.
+        failed:
+          type:
+          - string
+          - "null"
+          description: A tag whose rollout failed, not tried again.
+        from:
+          type:
+          - string
+          - "null"
+          description: The image before the last update.
+        generation:
+          type:
+          - integer
+          - "null"
+          format: int64
+          description: The workload's `metadata.generation` after that write.
+        reason:
+          type:
+          - string
+          - "null"
+          description: Why the last update failed.
+        state:
+          oneOf:
+          - $ref: "#/components/schemas/ImageUpdateState"
+            description: The state of the last update; absent before the first.
+          - type: "null"
+        to:
+          type:
+          - string
+          - "null"
+          description: The image the last update set.
+    ImageUpdateState:
+      type: string
+      description: Where the last update is.
+      enum:
+      - updating
+      - updated
+      - rolledBack
+      - failed
+      - superseded
+    ImageUpdates:
+      type: object
+      description: A workload's automatic image updates, as its metadata says.
+      required:
+      - window
+      - last
+      properties:
+        last:
+          $ref: "#/components/schemas/ImageUpdateRecord"
+          description: What the image updater last did.
+        window:
+          type: string
+          description: |-
+            The window, as the annotation names it, such as `sun 03:00 2h Europe/Amsterdam`; empty
+            when it names none.
     ImportedEnv:
       type: object
       description: |-
@@ -18156,6 +18263,13 @@ components:
             description: >-
               Its resource name, `projects/<project>/services/<kind>/<name>`; see
               [`crate::id`].
+          imageUpdates:
+            oneOf:
+            - $ref: "#/components/schemas/ImageUpdates"
+              description: >-
+                Its automatic image updates, from its label and annotations; absent unless it
+                is opted in.
+            - type: "null"
           podSecurity:
             oneOf:
             - $ref: "#/components/schemas/PodSecurityLevel"

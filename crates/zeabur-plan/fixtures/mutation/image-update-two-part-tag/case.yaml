@@ -1,0 +1,8 @@
+description: "A tag of two parts, as PostgreSQL's 16.4, is not of the form X.Y.Z and is not updated."
+operation: mutation.imageUpdate
+params:
+  tags:
+  - '16.4'
+  - '16.5'
+  - '17.0'
+  now: '2026-11-29T03:00:00Z'

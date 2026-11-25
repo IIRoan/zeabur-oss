@@ -1,0 +1,10 @@
+description: "Opting in labels the workload and names its window; a workload without labels or annotations gets both maps."
+operation: mutation.plan
+params:
+  request:
+    changes:
+    - op: imageUpdates
+      workload:
+        kind: Deployment
+        name: cache
+      window: sun 03:00 2h Europe/Amsterdam

@@ -199,6 +199,27 @@ expect "memberRoles=false" "$out" '[select(.kind == "ClusterRole" or .metadata.n
 expect "memberRoles=false" "$out" \
   'select(.kind == "Deployment" and .metadata.name == "zeabur") | .spec.template.spec.containers[0].env[] | select(.name == "ZEABUR_MEMBER_ROLES") | .value' false
 
+# The image updater: off by default; on, its own account has exactly the project viewer's and a
+# member's reads and patches of Deployments and StatefulSets, which its admission policy holds to
+# opted-in workloads.
+expect minimal "$(render -f "$chart/ci/minimal-values.yaml")" \
+  '[select(.metadata.name == "zeabur-image-updater")] | length' 0
+out=$(render -f "$chart/ci/minimal-values.yaml" --set imageUpdates.enabled=true)
+expect imageUpdates "$out" \
+  '[select(.kind == "ClusterRoleBinding") | .roleRef.name + ">" + (.subjects[] | .namespace + "/" + .name)] | join(",")' \
+  "zeabur-image-updater>zeabur/zeabur-image-updater,zeabur-project-viewer>zeabur/zeabur-image-updater,zeabur-member>zeabur/zeabur-image-updater"
+expect imageUpdates "$out" \
+  'select(.kind == "ClusterRole" and .metadata.name == "zeabur-image-updater") | .rules[] | [.apiGroups, .resources, .verbs] | map(join(",")) | join("|")' \
+  'apps|deployments,statefulsets|patch'
+expect imageUpdates "$out" \
+  'select(.kind == "ValidatingAdmissionPolicy" and .metadata.name == "zeabur-image-updater") | .spec.matchConditions[0].expression' \
+  'request.userInfo.username == "system:serviceaccount:zeabur:zeabur-image-updater"'
+updater='select(.kind == "Deployment" and .metadata.name == "zeabur-image-updater") | .spec.template.spec'
+expect imageUpdates "$out" "$updater | [.automountServiceAccountToken, .containers[0].args[0], .volumes[0].projected.sources[0].serviceAccountToken.path] | join(\",\")" \
+  false,image-updates,token
+helm template zeabur "$chart" -f "$chart/ci/minimal-values.yaml" --set imageUpdates.enabled=true \
+  --set memberRoles.enabled=false >/dev/null 2>&1 && fail "imageUpdates without memberRoles rendered"
+
 # Without systemHosts, projects may use any domain.
 out=$(render -f "$chart/ci/minimal-values.yaml" --set systemHosts.enabled=false)
 expect "systemHosts=false" "$out" '[select(.metadata.name | test("^zeabur-system-hosts"))] | length' 0

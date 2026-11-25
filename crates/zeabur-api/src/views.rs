@@ -741,7 +741,7 @@ pub struct Upgrades {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub release: Option<zeabur_catalog::versions::Release>,
     /// When the bundled table was copied from the Kubernetes schedule.
-    pub data_copied_at: zeabur_kube::k8s_openapi::jiff::civil::Date,
+    pub data_copied_at: jiff::civil::Date,
     /// Every state that applies, most severe first. An open set.
     pub states: Vec<zeabur_catalog::versions::UpgradeState>,
     /// The one state the cluster's header and Home show: the most severe that shows.

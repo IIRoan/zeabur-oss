@@ -1,0 +1,7 @@
+description: "Before that start, at 01:30 CET, the window is not open yet."
+operation: mutation.imageUpdate
+params:
+  tags:
+  - 7.2.4
+  - 7.2.5
+  now: '2027-03-28T00:30:00Z'

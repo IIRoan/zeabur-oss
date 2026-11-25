@@ -1,0 +1,7 @@
+description: "On the day clocks go back, 02:30 comes twice in Amsterdam; the window opens at the first, 00:30 UTC."
+operation: mutation.imageUpdate
+params:
+  tags:
+  - 7.2.4
+  - 7.2.5
+  now: '2026-10-25T00:30:00Z'

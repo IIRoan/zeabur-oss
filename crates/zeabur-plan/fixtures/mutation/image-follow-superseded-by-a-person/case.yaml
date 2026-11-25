@@ -1,0 +1,5 @@
+description: "A person who sets the image during the rollout takes it over: nothing is rolled back."
+operation: mutation.imageFollow
+params:
+  rollout: stuck:crashLoop
+  now: '2026-11-29T03:05:00Z'

@@ -174,6 +174,8 @@ why. Add a row before introducing a new concept.
 | sign in / sign out | 登入／登出 | 登录／退出登录 | |
 | deploy, roll out | 部署 | 部署 | |
 | auto-deploy new builds | 新建置完成後自動部署 | 新构建完成后自动部署 | Keel is named only when it is missing, when its own policy decides, and in YAML |
+| patch release (automatic image updates) | 修補版本 | 补丁版本 | `X.Y.Z` to a higher `Z`; minor and major versions are 次要版本／主要版本 (zh-CN 次版本／主版本) |
+| window (when automatic image updates may run) | 時段 | 时段 | In words with its time zone (每星期日 03:00 起 2 小時（Europe/Amsterdam）) |
 | releases (a service's revisions) | 發布紀錄 | 发布记录 | |
 | revision | 修訂版本 | 修订版本 | |
 | restart | 重新啟動 | 重启 | |

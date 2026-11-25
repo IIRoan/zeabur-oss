@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cache
+  namespace: demo
+  uid: 6f3d0c52-2a4e-4f7e-9d61-0c8a5b1e2f40
+  resourceVersion: '57'
+  generation: 4
+  labels:
+    zeabur.com/image-updates: patch
+  annotations:
+    zeabur.com/image-update-window: sun 03:00 2h Europe/Amsterdam
+    zeabur.com/image-update-status: '{"state":"updating","checked":"2026-11-29T02:00:00Z","from":"redis:7.2.4","to":"redis:7.2.5","at":"2026-11-29T03:00:00Z","generation":4,"deadline":"2026-11-29T03:11:00Z"}'
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cache
+  template:
+    metadata:
+      labels:
+        app: cache
+    spec:
+      containers:
+      - name: redis
+        image: redis:7.2.5
+status:
+  observedGeneration: 4
+  replicas: 1
+  updatedReplicas: 1
+  readyReplicas: 1
+  availableReplicas: 1
+  conditions:
+  - type: Available
+    status: 'True'
+    reason: MinimumReplicasAvailable
+  - type: Progressing
+    status: 'True'
+    reason: NewReplicaSetAvailable

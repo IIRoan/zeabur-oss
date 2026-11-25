@@ -32,7 +32,7 @@ pub struct AppState {
     pub plan_key: Option<Arc<crate::plan_token::PlanKey>>,
     /// The time now: `Timestamp::now`, or a fixed time in tests, so answers that depend on the
     /// date (end of life, plan expiry) can be checked on one day.
-    pub clock: fn() -> zeabur_kube::k8s_openapi::jiff::Timestamp,
+    pub clock: fn() -> jiff::Timestamp,
     /// How long a terminal may idle before the server closes it ([`crate::pods::exec::IDLE`]).
     pub terminal_idle: std::time::Duration,
     /// Zeabur's settings as the server was started (see [`crate::settings`]).

@@ -1,0 +1,30 @@
+{
+  "objects": [
+    {
+      "write": {
+        "type": "patch",
+        "operations": [
+          {
+            "op": "test",
+            "path": "/metadata/generation",
+            "value": 3
+          },
+          {
+            "op": "add",
+            "path": "/metadata/labels",
+            "value": {
+              "zeabur.com/image-updates": "patch"
+            }
+          },
+          {
+            "op": "add",
+            "path": "/metadata/annotations",
+            "value": {
+              "zeabur.com/image-update-window": "sun 03:00 2h Europe/Amsterdam"
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

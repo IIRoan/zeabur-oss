@@ -1,0 +1,37 @@
+{
+  "container": "redis",
+  "image": "redis:7.2.5",
+  "operations": [
+    {
+      "op": "test",
+      "path": "/metadata/uid",
+      "value": "6f3d0c52-2a4e-4f7e-9d61-0c8a5b1e2f40"
+    },
+    {
+      "op": "test",
+      "path": "/metadata/resourceVersion",
+      "value": "41"
+    },
+    {
+      "op": "test",
+      "path": "/spec/template/spec/containers/0/name",
+      "value": "redis"
+    },
+    {
+      "op": "test",
+      "path": "/spec/template/spec/containers/0/image",
+      "value": "redis:7.2.4"
+    },
+    {
+      "op": "replace",
+      "path": "/spec/template/spec/containers/0/image",
+      "value": "redis:7.2.5"
+    },
+    {
+      "op": "add",
+      "path": "/metadata/annotations/zeabur.com~1image-update-status",
+      "value": "{\"state\":\"updating\",\"checked\":\"2026-11-29T02:00:00Z\",\"from\":\"redis:7.2.4\",\"to\":\"redis:7.2.5\",\"at\":\"2026-11-29T03:00:00Z\",\"generation\":4,\"deadline\":\"2026-11-29T03:11:00Z\",\"awaiting\":\"8.0.0\"}"
+    }
+  ],
+  "awaiting": "8.0.0"
+}

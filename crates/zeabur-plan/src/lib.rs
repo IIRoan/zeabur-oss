@@ -14,6 +14,7 @@ pub mod edit;
 mod error_pages;
 pub mod fields;
 mod image_service;
+pub mod image_update;
 mod ip_limits;
 pub mod json;
 pub mod node_shell;

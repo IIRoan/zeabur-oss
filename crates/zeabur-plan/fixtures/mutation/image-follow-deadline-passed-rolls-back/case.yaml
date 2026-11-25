@@ -1,0 +1,5 @@
+description: "A rollout still going at the recorded deadline counts as failed."
+operation: mutation.imageFollow
+params:
+  rollout: progressing
+  now: '2026-11-29T03:11:00Z'
