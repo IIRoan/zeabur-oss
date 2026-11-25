@@ -1,5 +1,5 @@
 {
-  "container": "redis",
+  "repository": "redis",
   "image": null,
   "operations": [
     {

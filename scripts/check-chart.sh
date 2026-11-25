@@ -199,9 +199,7 @@ expect "memberRoles=false" "$out" '[select(.kind == "ClusterRole" or .metadata.n
 expect "memberRoles=false" "$out" \
   'select(.kind == "Deployment" and .metadata.name == "zeabur") | .spec.template.spec.containers[0].env[] | select(.name == "ZEABUR_MEMBER_ROLES") | .value' false
 
-# The image updater: off by default; on, its own account has exactly the project viewer's and a
-# member's reads and patches of Deployments and StatefulSets, which its admission policy holds to
-# opted-in workloads.
+# The image updater is off by default; on, it has only its own rights, held by its policy.
 expect minimal "$(render -f "$chart/ci/minimal-values.yaml")" \
   '[select(.metadata.name == "zeabur-image-updater")] | length' 0
 out=$(render -f "$chart/ci/minimal-values.yaml" --set imageUpdates.enabled=true)

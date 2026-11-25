@@ -4,9 +4,8 @@
 {{- fail "imageUpdates.enabled needs memberRoles.enabled: the updater reads projects with the zeabur-project-viewer role" }}
 {{- end }}
 {{- $name := printf "%s-image-updater" (include "zeabur.fullname" $) }}
-# The image updater (crates/zeabur/src/image_updates.rs). Its rights: the project viewer's reads
-# and a member's (files/member-roles.yaml), in every namespace, and patching Deployments and
-# StatefulSets, which the policy below holds to opted-in workloads.
+# The image updater (crates/zeabur/src/image_updates.rs): it reads as a project viewer and a
+# member, and patches Deployments and StatefulSets only as the policy below allows.
 apiVersion: v1
 kind: ServiceAccount
 metadata:
@@ -44,9 +43,7 @@ subjects:
     namespace: {{ $.Release.Namespace }}
 {{- end }}
 ---
-# The updater changes only workloads opted in before and after its patch, keeps their replicas,
-# pod-level settings, volumes and each container's repository, command, environment, mounts and
-# security context: an update or its rollback moves images, nothing else.
+# Its patches change only images and its record, on workloads opted in before and after.
 apiVersion: admissionregistration.k8s.io/v1
 kind: ValidatingAdmissionPolicy
 metadata:
@@ -121,7 +118,6 @@ metadata:
     {{- include "zeabur.labels" $ | nindent 4 }}
     app.kubernetes.io/component: image-updater
 spec:
-  # One updater: two would check each window twice, though their writes test what they read.
   replicas: 1
   strategy:
     type: Recreate
@@ -166,8 +162,6 @@ spec:
               readOnly: true
             {{- with include "zeabur.extraCaMount" $ }}{{ . | trim | nindent 12 }}{{- end }}
       volumes:
-        # Its own token, which kubelet renews, with the CA and the namespace, where in-cluster
-        # clients read them.
         - name: kube-api
           projected:
             defaultMode: 0444

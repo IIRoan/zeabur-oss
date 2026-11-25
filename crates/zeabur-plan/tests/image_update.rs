@@ -241,7 +241,6 @@ mod tests {
         let stored = after_update();
         let before = apply_patch(&stored, &stuck(&stored)).unwrap();
         assert_eq!(record_of(&before).failed.as_deref(), Some("7.2.5"));
-        // The rollout report's plan (`Change::Rollback`) brings the release before back.
         let back = deployment(&Read {
             resource_version: "63",
             generation: 5,
@@ -254,7 +253,6 @@ mod tests {
         let record = record_of(&recorded);
         assert_eq!(record.state, Some(State::RolledBack));
         assert_eq!(record.reason.as_deref(), Some("crashLoop"));
-        // The next window does not try 7.2.5 again.
         let next_week = recorded;
         let tags = ["7.2.4", "7.2.5"].map(str::to_owned);
         let checked = image_update(&next_week, &tags, &utc, at("2026-12-06T03:00:00Z")).unwrap();

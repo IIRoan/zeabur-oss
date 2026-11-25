@@ -39,13 +39,13 @@ use k8s_openapi::apimachinery::pkg::apis::meta::v1::ObjectMeta;
 use k8s_openapi::jiff::civil::{DateTime, Time};
 use k8s_openapi::jiff::tz::TimeZone;
 use k8s_openapi::jiff::{SignedDuration, Timestamp};
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 use serde_json::{Value, json};
+use zeabur_model::WorkloadRef;
 use zeabur_model::adapters::controller_of;
 use zeabur_model::adapters::provenance::detect_tool;
 pub use zeabur_model::image_updates::{IMAGE_UPDATES, PATCH, Record, STATUS, State, WINDOW};
 use zeabur_model::readiness::{self, Readiness, Reason};
-use zeabur_model::{WorkloadKind, WorkloadRef};
 
 use crate::builds::KEEL_POLICY;
 use crate::fields::{Step, owners, reapplying_tool};
@@ -54,7 +54,6 @@ use crate::plan::{ErrorKind, PlanError, Planner, error, workload_json, workload_
 use crate::project::{set_key, shown, steps};
 use crate::rules::managed_code;
 
-/// The shortest window.
 const SHORTEST: SignedDuration = SignedDuration::from_mins(15);
 /// The longest window: a day, so that two occurrences never overlap.
 const LONGEST: SignedDuration = SignedDuration::from_hours(24);
@@ -89,13 +88,6 @@ impl std::fmt::Display for InvalidWindow {
 
 const DAYS: [&str; 7] = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"];
 
-/// Two digits.
-fn two(part: &str) -> Option<i8> {
-    (part.len() == 2 && part.bytes().all(|b| b.is_ascii_digit()))
-        .then(|| part.parse().ok())
-        .flatten()
-}
-
 impl FromStr for WindowSpec {
     type Err = InvalidWindow;
 
@@ -120,19 +112,9 @@ impl FromStr for WindowSpec {
             }
             chosen
         };
-        let (hour, minute) = start.split_once(':').ok_or(InvalidWindow)?;
-        let start = Time::new(
-            two(hour).ok_or(InvalidWindow)?,
-            two(minute).ok_or(InvalidWindow)?,
-            0,
-            0,
-        )
-        .map_err(|_range| InvalidWindow)?;
+        let start: Time = start.parse().map_err(|_syntax| InvalidWindow)?;
         let length: SignedDuration = length.parse().map_err(|_syntax| InvalidWindow)?;
-        let zone_valid = zone
-            .bytes()
-            .all(|b| b.is_ascii_alphanumeric() || matches!(b, b'/' | b'_' | b'-' | b'+'));
-        if !(SHORTEST..=LONGEST).contains(&length) || !zone_valid {
+        if !(SHORTEST..=LONGEST).contains(&length) {
             return Err(InvalidWindow);
         }
         Ok(Self {
@@ -151,10 +133,11 @@ impl WindowSpec {
         &self.zone
     }
 
-    /// The occurrence open at `now` in `tz`, if one is. A start that a change to daylight saving
-    /// time skips is taken as the same time after the change, and one it repeats as the first.
+    /// When the occurrence open at `now` in `tz` opened, if one is open. A start that a change
+    /// to daylight saving time skips is taken as the same time after the change, and one it
+    /// repeats as the first.
     #[must_use]
-    pub fn occurrence(&self, tz: &TimeZone, now: Timestamp) -> Option<Window> {
+    fn occurrence(&self, tz: &TimeZone, now: Timestamp) -> Option<Timestamp> {
         let mut date = now.to_zoned(tz.clone()).date();
         // A window opened yesterday can still be open; a day is the longest.
         for _ in 0..2 {
@@ -169,23 +152,13 @@ impl WindowSpec {
                     .timestamp();
                 let end = start.checked_add(self.length).ok()?;
                 if start <= now && now < end {
-                    return Some(Window { start, end });
+                    return Some(start);
                 }
             }
             date = date.yesterday().ok()?;
         }
         None
     }
-}
-
-/// One occurrence of a maintenance window, from `start` up to but not including `end`.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize)]
-#[serde(deny_unknown_fields)]
-pub struct Window {
-    /// When it opens.
-    pub start: Timestamp,
-    /// When it closes.
-    pub end: Timestamp,
 }
 
 /// The record a workload, as read, carries; the default when it has none.
@@ -202,8 +175,8 @@ pub fn record_of(workload: &Value) -> Record {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ImageUpdate {
-    /// The container whose image it moves.
-    pub container: String,
+    /// The repository whose tags it chose from.
+    pub repository: String,
     /// The image after the write; absent when no newer patch release is listed.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub image: Option<String>,
@@ -244,12 +217,11 @@ impl<'a> Version<'a> {
 
 /// The repository and tag of an image without a digest; `None` when it names no tag.
 #[must_use]
-pub fn split_tag(image: &str) -> Option<(&str, &str)> {
+fn split_tag(image: &str) -> Option<(&str, &str)> {
     let (repository, tag) = image.rsplit_once(':')?;
     (!tag.contains('/')).then_some((repository, tag))
 }
 
-/// What a workload is, read once for the rules.
 struct Read {
     kind: &'static str,
     name: String,
@@ -278,7 +250,7 @@ pub fn image_update(
     now: Timestamp,
 ) -> Result<ImageUpdate, PlanError> {
     let read = read(workload)?;
-    let window = window(&read, zone, now)?;
+    let opened = window(&read, zone, now)?;
     let record = record_of(workload);
     if record.state == Some(State::Updating) {
         return Err(error(
@@ -287,14 +259,11 @@ pub fn image_update(
             "The last update's rollout is still followed.",
         ));
     }
-    if record.checked == Some(window.start) {
+    if record.checked == Some(opened) {
         return Err(error(
             ErrorKind::Conflict,
             "already_checked",
-            format!(
-                "This window, open since {}, was checked already.",
-                window.start
-            ),
+            format!("This window, open since {opened}, was checked already."),
         ));
     }
     refuse_other_writers(&read.meta, read.kind, &read.name)?;
@@ -304,7 +273,7 @@ pub fn image_update(
     let (uid, version) = pins(&read.meta)?;
     let (patch, awaiting) = newer(&current, tags, record.failed.as_deref());
     let mut next = Record {
-        checked: Some(window.start),
+        checked: Some(opened),
         awaiting: awaiting.map(str::to_owned),
         ..record
     };
@@ -341,7 +310,7 @@ pub fn image_update(
         json!(next.to_annotation()),
     ));
     Ok(ImageUpdate {
-        container: container.name.clone(),
+        repository: repository.to_owned(),
         image: image_after,
         operations,
         awaiting: next.awaiting,
@@ -507,7 +476,6 @@ pub fn follow(workload: &Value, rollout: &Rollout, now: Timestamp) -> Result<Fol
                 return recorded(workload, &read, Outcome::Waiting, None);
             }
         };
-        // Recorded before the rollback is sent, once: a crash in between keeps the tag failed.
         let next = record.reason.is_none().then(|| Record {
             failed,
             reason: Some(reason),
@@ -583,7 +551,6 @@ pub fn not_rolled_back(workload: &Value, why: &str) -> Result<Vec<Value>, PlanEr
     recorded(workload, &read, Outcome::RollBack, Some(&next)).map(|f| f.operations)
 }
 
-/// The workload's kind, name, metadata, readiness and containers.
 fn read(workload: &Value) -> Result<Read, PlanError> {
     let typed = |e: serde_json::Error| error(ErrorKind::Invalid, "not_updatable", e.to_string());
     let containers = |spec: Option<PodTemplateSpec>| {
@@ -633,12 +600,13 @@ fn read(workload: &Value) -> Result<Read, PlanError> {
     Ok(read)
 }
 
-/// The occurrence of the workload's window open at `now`, refusing one that is not opted in.
+/// When the occurrence of the workload's window open at `now` opened, refusing one that is not
+/// opted in.
 fn window(
     read: &Read,
     zone: &dyn Fn(&str) -> Option<TimeZone>,
     now: Timestamp,
-) -> Result<Window, PlanError> {
+) -> Result<Timestamp, PlanError> {
     let (kind, name) = (read.kind, &read.name);
     if read
         .meta
@@ -740,7 +708,6 @@ fn settled(readiness: Readiness) -> Result<(), PlanError> {
     }
 }
 
-/// The `uid` and `resourceVersion` the write is made against.
 fn pins(meta: &ObjectMeta) -> Result<(&str, &str), PlanError> {
     match (meta.uid.as_deref(), meta.resource_version.as_deref()) {
         (Some(uid), Some(version)) if !uid.is_empty() && !version.is_empty() => Ok((uid, version)),
@@ -794,90 +761,48 @@ impl Planner<'_> {
         window: Option<&str>,
     ) -> Result<(), PlanError> {
         let found = self.workload(reference)?;
-        if !matches!(
-            found.kind(),
-            WorkloadKind::Deployment | WorkloadKind::StatefulSet
-        ) {
-            return Err(error(
-                ErrorKind::Invalid,
-                "not_updatable",
-                format!(
-                    "{} {} is not a Deployment or StatefulSet.",
-                    reference.kind.as_str(),
-                    reference.name
-                ),
-            ));
-        }
-        let (kind, name) = (reference.kind.as_str(), reference.name.as_str());
-        Self::refuse_managed(found.meta(), kind, name)?;
-        refuse_other_writers(found.meta(), kind, name)?;
         let index = self.working(workload_target(found), workload_json(found)?);
         let current = self.current(index);
-        let label = pointer(&["metadata", "labels", IMAGE_UPDATES]);
-        let annotation = pointer(&["metadata", "annotations", WINDOW]);
-        let (label_now, window_now) = (
-            current.pointer(&label).cloned(),
-            current.pointer(&annotation).cloned(),
-        );
+        let workload = read(&current)?;
+        refuse_other_writers(&workload.meta, workload.kind, &workload.name)?;
         let window = window.map(str::trim).filter(|w| !w.is_empty());
         if let Some(window) = window {
             window
                 .parse::<WindowSpec>()
                 .map_err(|e| error(ErrorKind::BadRequest, "invalid_window", e.to_string()))?;
-            updatable_image(&current, &read(&current)?)?;
+            updatable_image(&current, &workload)?;
         }
-        let wanted = window.map(|w| (json!(PATCH), json!(w)));
-        if wanted.as_ref().map(|(l, w)| (Some(l), Some(w)))
-            == Some((label_now.as_ref(), window_now.as_ref()))
-            || (wanted.is_none() && label_now.is_none() && window_now.is_none())
-        {
-            return Err(error(
-                ErrorKind::BadRequest,
-                "unchanged",
-                format!(
-                    "{kind} {name} is already {}.",
-                    if wanted.is_some() {
-                        "updated in this window"
-                    } else {
-                        "updated by hand"
-                    }
-                ),
-            ));
-        }
-        for (map, key, path, before, after) in [
-            (
-                "labels",
-                IMAGE_UPDATES,
-                &label,
-                label_now,
-                wanted.as_ref().map(|(l, _)| l),
-            ),
-            (
-                "annotations",
-                WINDOW,
-                &annotation,
-                window_now,
-                wanted.as_ref().map(|(_, w)| w),
-            ),
+        let mut changed = false;
+        for (map, key, value) in [
+            ("labels", IMAGE_UPDATES, window.map(|_| PATCH)),
+            ("annotations", WINDOW, window),
         ] {
-            let operations = match (before, after) {
-                (Some(before), Some(after)) if &before == after => continue,
+            let path = pointer(&["metadata", map, key]);
+            let operations = match (current.pointer(&path).cloned(), value) {
+                (Some(before), Some(after)) if before == after => continue,
                 (Some(before), Some(after)) => {
-                    vec![test(path, before), replace(path, after.clone())]
+                    vec![test(&path, before), replace(&path, json!(after))]
                 }
-                (None, Some(after)) => set_key(
-                    &self.current(index),
-                    map,
-                    key,
-                    after.as_str().unwrap_or_default(),
-                ),
-                (Some(before), None) => vec![test(path, before), remove(path)],
+                (None, Some(after)) => set_key(&self.current(index), map, key, after),
+                (Some(before), None) => vec![test(&path, before), remove(&path)],
                 (None, None) => continue,
             };
             self.claim(index, &steps(map, key), &shown(map, key))?;
             self.patch(index, operations)?;
+            changed = true;
         }
-        Ok(())
+        if changed {
+            Ok(())
+        } else {
+            Err(error(
+                ErrorKind::BadRequest,
+                "unchanged",
+                format!(
+                    "{} {} already has these image updates.",
+                    workload.kind, workload.name
+                ),
+            ))
+        }
     }
 }
 

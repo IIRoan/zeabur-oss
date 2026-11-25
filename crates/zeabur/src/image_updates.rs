@@ -30,8 +30,7 @@ use zeabur_kube::{
     Cluster, ClusterEndpoint, ObjectTarget, ResourceRef, UserClient, WriteBody, WriteRequest,
 };
 use zeabur_plan::image_update::{
-    IMAGE_UPDATES, Outcome, PATCH, Rollout, State, follow, image_update, not_rolled_back,
-    record_of, split_tag,
+    IMAGE_UPDATES, Outcome, PATCH, Rollout, State, follow, image_update, not_rolled_back, record_of,
 };
 
 use crate::api::Api;
@@ -52,7 +51,6 @@ pub(crate) struct ImageUpdatesArgs {
     extra_ca_file: Option<PathBuf>,
 }
 
-/// What one pass needs.
 struct Updater {
     cluster: Arc<dyn Cluster>,
     api: Api,
@@ -92,7 +90,6 @@ pub(crate) async fn run(args: &ImageUpdatesArgs) -> Result<(), String> {
     }
 }
 
-/// The kinds that are updated.
 fn kinds() -> [ResourceRef; 2] {
     [
         ResourceRef::new("apps", "v1", "deployments", "Deployment"),
@@ -101,7 +98,6 @@ fn kinds() -> [ResourceRef; 2] {
 }
 
 impl Updater {
-    /// One pass over every opted-in workload.
     async fn pass(&self) {
         let mut tags: HashMap<String, Result<Vec<String>, String>> = HashMap::new();
         for kind in kinds() {
@@ -144,17 +140,15 @@ impl Updater {
         if record.state == Some(State::Updating) {
             return self.follow(at).await;
         }
-        // Asked first without tags: only a workload due for a check has its registry read.
-        if image_update(&workload, &[], &zone, Timestamp::now()).is_err() {
+        let Ok(due) = image_update(&workload, &[], &zone, Timestamp::now()) else {
             return Ok(());
-        }
-        let image = image_of(&workload).ok_or("the workload names no image")?;
-        let repository = split_tag(&image).map_or(image.as_str(), |(r, _)| r);
-        let listed = if let Some(listed) = tags.get(repository) {
+        };
+        let repository = due.repository;
+        let listed = if let Some(listed) = tags.get(&repository) {
             listed.clone()
         } else {
-            let listed = self.registries.tags(&image).await;
-            tags.insert(repository.to_owned(), listed.clone());
+            let listed = self.registries.tags(&repository).await;
+            tags.insert(repository.clone(), listed.clone());
             listed
         };
         let listed = listed.map_err(|why| format!("the tags of {repository}: {why}"))?;
@@ -232,7 +226,6 @@ impl Updater {
         Ok(())
     }
 
-    /// The workload as it is now.
     async fn read(&self, at: &Workload<'_>) -> Result<Value, String> {
         let object = self
             .cluster
@@ -248,7 +241,6 @@ impl Updater {
         Ok(workload)
     }
 
-    /// Sends `operations` to the workload as one JSON Patch.
     async fn patch(&self, at: &Workload<'_>, operations: Vec<Value>) -> Result<(), String> {
         let request = WriteRequest {
             target: ObjectTarget {
@@ -269,7 +261,6 @@ impl Updater {
     }
 }
 
-/// One workload.
 struct Workload<'a> {
     kind: &'a ResourceRef,
     namespace: &'a str,
@@ -291,18 +282,6 @@ fn zone(name: &str) -> Option<TimeZone> {
     TimeZone::get(name).ok()
 }
 
-/// The image of the workload's one container.
-fn image_of(workload: &Value) -> Option<String> {
-    match workload
-        .pointer("/spec/template/spec/containers")
-        .and_then(Value::as_array)
-        .map(Vec::as_slice)
-    {
-        Some([only]) => only.get("image").and_then(Value::as_str).map(str::to_owned),
-        _ => None,
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use std::collections::BTreeMap;
@@ -319,7 +298,6 @@ mod tests {
 
     #[test]
     fn the_zone_database_is_built_in() {
-        // The image is `FROM scratch`: no /usr/share/zoneinfo to read.
         let amsterdam = zone("Europe/Amsterdam").unwrap();
         let winter: Timestamp = "2026-11-29T02:00:00Z".parse().unwrap();
         assert_eq!(
@@ -437,7 +415,6 @@ mod tests {
             registries: Inspector::new(Arc::new(Hub), Vec::new()),
         };
 
-        // In the window: the newest 7.2 patch release, with 8.0.0 waiting for a person.
         updater.pass().await;
         let moved = cache(&cluster);
         assert_eq!(
@@ -448,7 +425,6 @@ mod tests {
         assert_eq!(record.state, Some(State::Updating));
         assert_eq!(record.awaiting.as_deref(), Some("8.0.0"));
 
-        // The controller rolls it out and the new pod crash loops.
         cluster.update(|state| {
             let objects = state.objects.get_mut("demo").unwrap();
             let deployment: &mut Deployment = &mut objects.deployments[0];
@@ -467,14 +443,12 @@ mod tests {
                 .unwrap()
                 .push(from_value(replica_set(2, "redis:7.2.5", 0)).unwrap());
         });
-        // Stuck: the failure is recorded, then the rollout report's rollback is applied.
         updater.pass().await;
         let back = cache(&cluster);
         assert_eq!(
             back.pointer("/spec/template/spec/containers/0/image"),
             Some(&json!("redis:7.2.4"))
         );
-        // The rollback is recorded, and 7.2.5 is not tried again.
         updater.pass().await;
         let record = record_of(&cache(&cluster));
         assert_eq!(record.state, Some(State::RolledBack));

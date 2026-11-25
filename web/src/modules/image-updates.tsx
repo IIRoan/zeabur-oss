@@ -29,7 +29,6 @@ import {
 import type { Service } from "@/model/service"
 import type { ServiceSettingsProps, ServiceSettingsSection } from "@/modules/service-settings"
 
-/** The window's four fields. */
 function WindowFields({
   form,
   set,
@@ -77,7 +76,6 @@ function WindowFields({
   )
 }
 
-/** What the updater last did and what waits for a person, under the switch. */
 function LastUpdate({ service }: { service: Service }) {
   const t = useT()
   const { locale } = useI18n()

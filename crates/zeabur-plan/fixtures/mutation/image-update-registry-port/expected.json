@@ -1,5 +1,5 @@
 {
-  "container": "redis",
+  "repository": "registry.test:5000/cache/redis",
   "image": "registry.test:5000/cache/redis:7.2.5",
   "operations": [
     {
