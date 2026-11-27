@@ -1,5 +1,5 @@
 name: Full CI validation
-run-name: Full CI for CloudNativePG PR 2 (1a36f802)
+run-name: Full CI for CloudNativePG PR 2 (a31fba8e)
 
 # Each job runs scripts/ci/<job>.sh in the Nix dev shell, the same as locally, except docs, which
 # runs the website's check of docs/ (locally: bun scripts/docs-check.ts <this checkout> in the
@@ -36,7 +36,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-          ref: cd1d00fdba369c9f14ee6ab51f6c0f3dfe1d6666
+          ref: c80f77524f2458681c7e9d40bac3bd2e3741a136
           fetch-depth: 0
           # scripts/api-break.ts reads the commits since the base for a `BREAKING CHANGE:` footer.
       - uses: zeabur-oss/.github/actions/ci-setup@395adf27d31c77538ebf7c154946b52822387b96 # main
@@ -64,7 +64,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-          ref: cd1d00fdba369c9f14ee6ab51f6c0f3dfe1d6666
+          ref: c80f77524f2458681c7e9d40bac3bd2e3741a136
           fetch-depth: 0
       - uses: zeabur-oss/.github/actions/ci-setup@395adf27d31c77538ebf7c154946b52822387b96 # main
         with:
@@ -79,7 +79,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-          ref: cd1d00fdba369c9f14ee6ab51f6c0f3dfe1d6666
+          ref: c80f77524f2458681c7e9d40bac3bd2e3741a136
           fetch-depth: 0
           # fallow audit compares HEAD with HEAD^.
       - uses: zeabur-oss/.github/actions/ci-setup@395adf27d31c77538ebf7c154946b52822387b96 # main
@@ -96,7 +96,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-          ref: cd1d00fdba369c9f14ee6ab51f6c0f3dfe1d6666
+          ref: c80f77524f2458681c7e9d40bac3bd2e3741a136
           fetch-depth: 0
       - uses: zeabur-oss/.github/actions/ci-setup@395adf27d31c77538ebf7c154946b52822387b96 # main
         with:
@@ -113,7 +113,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-          ref: cd1d00fdba369c9f14ee6ab51f6c0f3dfe1d6666
+          ref: c80f77524f2458681c7e9d40bac3bd2e3741a136
           fetch-depth: 0
       - uses: zeabur-oss/.github/actions/ci-setup@395adf27d31c77538ebf7c154946b52822387b96 # main
         with:
@@ -129,7 +129,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-          ref: cd1d00fdba369c9f14ee6ab51f6c0f3dfe1d6666
+          ref: c80f77524f2458681c7e9d40bac3bd2e3741a136
           fetch-depth: 0
       - uses: zeabur-oss/.github/actions/ci-setup@395adf27d31c77538ebf7c154946b52822387b96 # main
         with:
@@ -145,7 +145,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-          ref: cd1d00fdba369c9f14ee6ab51f6c0f3dfe1d6666
+          ref: c80f77524f2458681c7e9d40bac3bd2e3741a136
           fetch-depth: 0
       - uses: zeabur-oss/.github/actions/ci-setup@395adf27d31c77538ebf7c154946b52822387b96 # main
       # zhtw-mcp builds from source; main's scheduled run keeps it, keyed on the lock file.
@@ -174,7 +174,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-          ref: cd1d00fdba369c9f14ee6ab51f6c0f3dfe1d6666
+          ref: c80f77524f2458681c7e9d40bac3bd2e3741a136
           fetch-depth: 0
       - uses: zeabur-oss/.github/actions/ci-setup@395adf27d31c77538ebf7c154946b52822387b96 # main
         with:
@@ -190,7 +190,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-          ref: cd1d00fdba369c9f14ee6ab51f6c0f3dfe1d6666
+          ref: c80f77524f2458681c7e9d40bac3bd2e3741a136
           fetch-depth: 0
       - uses: zeabur-oss/.github/actions/ci-setup@395adf27d31c77538ebf7c154946b52822387b96 # main
         with:
@@ -215,7 +215,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-          ref: cd1d00fdba369c9f14ee6ab51f6c0f3dfe1d6666
+          ref: c80f77524f2458681c7e9d40bac3bd2e3741a136
           fetch-depth: 0
       - uses: zeabur-oss/.github/actions/ci-setup@395adf27d31c77538ebf7c154946b52822387b96 # main
         with:
@@ -232,7 +232,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-          ref: cd1d00fdba369c9f14ee6ab51f6c0f3dfe1d6666
+          ref: c80f77524f2458681c7e9d40bac3bd2e3741a136
           fetch-depth: 0
       - uses: zeabur-oss/.github/actions/ci-setup@395adf27d31c77538ebf7c154946b52822387b96 # main
         with:
@@ -253,7 +253,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-          ref: cd1d00fdba369c9f14ee6ab51f6c0f3dfe1d6666
+          ref: c80f77524f2458681c7e9d40bac3bd2e3741a136
           fetch-depth: 0
       - env:
           GH_TOKEN: ${{ github.token }}
@@ -268,8 +268,8 @@ jobs:
       - uses: zeabur-oss/website/.github/actions/docs-check@c116a11cf3e0b0c940b50d962457c565881fb95a # main
       - name: Verify documentation matches the PR
         run: |
-          git fetch --no-tags origin cd1d00fdba369c9f14ee6ab51f6c0f3dfe1d6666
-          git diff --exit-code cd1d00fdba369c9f14ee6ab51f6c0f3dfe1d6666 HEAD -- docs/
+          git fetch --no-tags origin c80f77524f2458681c7e9d40bac3bd2e3741a136
+          git diff --exit-code c80f77524f2458681c7e9d40bac3bd2e3741a136 HEAD -- docs/
 
   # The check rulesets require.
   ok:
