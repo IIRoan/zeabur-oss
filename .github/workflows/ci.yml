@@ -1,4 +1,5 @@
-name: CI
+name: Full CI validation
+run-name: Full CI for CloudNativePG PR 2 (1a36f802)
 
 # Each job runs scripts/ci/<job>.sh in the Nix dev shell, the same as locally, except docs, which
 # runs the website's check of docs/ (locally: bun scripts/docs-check.ts <this checkout> in the
@@ -25,17 +26,19 @@ concurrency:
 
 env:
   CARGO_TERM_COLOR: always
+  CARGO_BUILD_JOBS: 4
 
 jobs:
   lint:
-    runs-on: instabox-medium
+    runs-on: ubuntu-26.04
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-          # scripts/api-break.ts reads the commits since the base for a `BREAKING CHANGE:` footer.
+          ref: cd1d00fdba369c9f14ee6ab51f6c0f3dfe1d6666
           fetch-depth: 0
+          # scripts/api-break.ts reads the commits since the base for a `BREAKING CHANGE:` footer.
       - uses: zeabur-oss/.github/actions/ci-setup@395adf27d31c77538ebf7c154946b52822387b96 # main
         with:
           rust-cache: true
@@ -55,12 +58,14 @@ jobs:
           retention-days: 14
 
   test:
-    runs-on: instabox-medium
+    runs-on: ubuntu-26.04
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+          ref: cd1d00fdba369c9f14ee6ab51f6c0f3dfe1d6666
+          fetch-depth: 0
       - uses: zeabur-oss/.github/actions/ci-setup@395adf27d31c77538ebf7c154946b52822387b96 # main
         with:
           rust-cache: true
@@ -68,14 +73,15 @@ jobs:
       - run: nix develop -c scripts/ci/test.sh
 
   ui:
-    runs-on: instabox-medium
+    runs-on: ubuntu-26.04
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+          ref: cd1d00fdba369c9f14ee6ab51f6c0f3dfe1d6666
+          fetch-depth: 0
           # fallow audit compares HEAD with HEAD^.
-          fetch-depth: 2
       - uses: zeabur-oss/.github/actions/ci-setup@395adf27d31c77538ebf7c154946b52822387b96 # main
         with:
           rust-cache: true
@@ -84,12 +90,14 @@ jobs:
 
   # desktop/, its own Cargo workspace, with the main workspace's rules (scripts/check-desktop.sh).
   desktop:
-    runs-on: instabox-medium
+    runs-on: ubuntu-26.04
     timeout-minutes: 120
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+          ref: cd1d00fdba369c9f14ee6ab51f6c0f3dfe1d6666
+          fetch-depth: 0
       - uses: zeabur-oss/.github/actions/ci-setup@395adf27d31c77538ebf7c154946b52822387b96 # main
         with:
           rust-cache: true
@@ -99,12 +107,14 @@ jobs:
   # Four to six minutes, set up included: nightly and by hand, not in the merge queue.
   fuzz:
     if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
-    runs-on: instabox-medium
+    runs-on: ubuntu-26.04
     timeout-minutes: 120
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+          ref: cd1d00fdba369c9f14ee6ab51f6c0f3dfe1d6666
+          fetch-depth: 0
       - uses: zeabur-oss/.github/actions/ci-setup@395adf27d31c77538ebf7c154946b52822387b96 # main
         with:
           rust-cache: true
@@ -113,12 +123,14 @@ jobs:
 
   no-ui:
     if: github.event_name != 'pull_request' && !(github.event_name == 'push' && github.ref_type == 'branch')
-    runs-on: instabox-medium
+    runs-on: ubuntu-26.04
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+          ref: cd1d00fdba369c9f14ee6ab51f6c0f3dfe1d6666
+          fetch-depth: 0
       - uses: zeabur-oss/.github/actions/ci-setup@395adf27d31c77538ebf7c154946b52822387b96 # main
         with:
           rust-cache: true
@@ -127,12 +139,14 @@ jobs:
 
   wording:
     if: github.event_name != 'pull_request' && !(github.event_name == 'push' && github.ref_type == 'branch')
-    runs-on: instabox-small
+    runs-on: ubuntu-26.04
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+          ref: cd1d00fdba369c9f14ee6ab51f6c0f3dfe1d6666
+          fetch-depth: 0
       - uses: zeabur-oss/.github/actions/ci-setup@395adf27d31c77538ebf7c154946b52822387b96 # main
       # zhtw-mcp builds from source; main's scheduled run keeps it, keyed on the lock file.
       - id: zhtw-mcp
@@ -160,6 +174,8 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+          ref: cd1d00fdba369c9f14ee6ab51f6c0f3dfe1d6666
+          fetch-depth: 0
       - uses: zeabur-oss/.github/actions/ci-setup@395adf27d31c77538ebf7c154946b52822387b96 # main
         with:
           rust-cache: true
@@ -174,6 +190,8 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+          ref: cd1d00fdba369c9f14ee6ab51f6c0f3dfe1d6666
+          fetch-depth: 0
       - uses: zeabur-oss/.github/actions/ci-setup@395adf27d31c77538ebf7c154946b52822387b96 # main
         with:
           rust-cache: true
@@ -197,6 +215,8 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+          ref: cd1d00fdba369c9f14ee6ab51f6c0f3dfe1d6666
+          fetch-depth: 0
       - uses: zeabur-oss/.github/actions/ci-setup@395adf27d31c77538ebf7c154946b52822387b96 # main
         with:
           rust-cache: true
@@ -212,6 +232,8 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+          ref: cd1d00fdba369c9f14ee6ab51f6c0f3dfe1d6666
+          fetch-depth: 0
       - uses: zeabur-oss/.github/actions/ci-setup@395adf27d31c77538ebf7c154946b52822387b96 # main
         with:
           rust-cache: true
@@ -222,7 +244,7 @@ jobs:
   nightly-issues:
     if: always() && github.event_name == 'schedule'
     needs: [fuzz, canary, e2e-full]
-    runs-on: instabox-small
+    runs-on: ubuntu-26.04
     timeout-minutes: 120
     permissions:
       contents: read
@@ -231,6 +253,8 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+          ref: cd1d00fdba369c9f14ee6ab51f6c0f3dfe1d6666
+          fetch-depth: 0
       - env:
           GH_TOKEN: ${{ github.token }}
           RESULTS: ${{ toJSON(needs) }}
@@ -238,17 +262,21 @@ jobs:
         run: scripts/nightly-issues.sh
 
   docs:
-    runs-on: instabox-small
+    runs-on: ubuntu-26.04
     timeout-minutes: 10
     steps:
       - uses: zeabur-oss/website/.github/actions/docs-check@c116a11cf3e0b0c940b50d962457c565881fb95a # main
+      - name: Verify documentation matches the PR
+        run: |
+          git fetch --no-tags origin cd1d00fdba369c9f14ee6ab51f6c0f3dfe1d6666
+          git diff --exit-code cd1d00fdba369c9f14ee6ab51f6c0f3dfe1d6666 HEAD -- docs/
 
   # The check rulesets require.
   ok:
     name: ci / ok
     if: always()
     needs: [lint, test, ui, desktop, fuzz, canary, no-ui, wording, cluster, e2e, e2e-full, docs]
-    runs-on: instabox-small
+    runs-on: ubuntu-26.04
     timeout-minutes: 5
     steps:
       - if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')
