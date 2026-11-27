@@ -498,6 +498,28 @@ export type Attribution = {
 }
 
 /**
+ * The database kind accepted by [`AutoUpdateTarget`].
+ */
+export type AutoUpdateClusterKind =
+  (typeof AutoUpdateClusterKind)[keyof typeof AutoUpdateClusterKind]
+
+export const AutoUpdateClusterKind = {
+  Cluster: "Cluster",
+} as const
+
+/**
+ * The existing service targets, or a CloudNativePG Cluster, whose Keel settings change.
+ */
+export type AutoUpdateTarget =
+  | WorkloadRef
+  | {
+      /** The CloudNativePG kind. */
+      kind: AutoUpdateClusterKind
+      /** The Cluster's name. */
+      name: string
+    }
+
+/**
  * How a backup run went.
  */
 export type BackupOutcome = (typeof BackupOutcome)[keyof typeof BackupOutcome]
@@ -2395,8 +2417,8 @@ export type Change =
       op: "autoUpdate"
       /** Which updates, if any. */
       update: Update
-      /** The workload: a Deployment, StatefulSet or DaemonSet. */
-      workload: WorkloadRef
+      /** A service's workload, or a CloudNativePG Cluster. */
+      workload: AutoUpdateTarget
     }
   | {
       op: "scale"
@@ -5594,35 +5616,6 @@ export type DatabaseStart = {
 }
 
 /**
- * The state of a debug container.
- */
-export type DebugState = (typeof DebugState)[keyof typeof DebugState]
-
-export const DebugState = {
-  running: "running",
-  waiting: "waiting",
-  terminated: "terminated",
-  unknown: "unknown",
-} as const
-
-/**
- * A debug container of Zeabur's.
- */
-export type DebugContainerStatus = {
-  /** Its image. */
-  image: string
-  /** Its name: the terminal's `container`. */
-  name: string
-  /**
-   * The kubelet's reason (`ErrImagePull`, `Completed`, …).
-   * @nullable
-   */
-  reason?: string | null
-  /** Its state. */
-  state: DebugState
-}
-
-/**
  * Where in a request a problem lies.
  */
 export type ProblemAt = {
@@ -5760,6 +5753,59 @@ export type Problem = {
   type: string
   unavailableLog?: UnavailableLog | null
   why?: Message | null
+}
+
+/**
+ * Whether automatic database updates can be enabled.
+ */
+export type DatabaseUpdaterStatus =
+  (typeof DatabaseUpdaterStatus)[keyof typeof DatabaseUpdaterStatus]
+
+export const DatabaseUpdaterStatus = {
+  missing: "missing",
+  notReady: "notReady",
+  ready: "ready",
+  unknown: "unknown",
+} as const
+
+/**
+ * The native state of the chart-owned database updater.
+ */
+export type DatabaseUpdater = {
+  /** A safe explanation without the cluster's connection details or Deployment contents. */
+  message: string
+  problem?: Problem | null
+  /** Whether it is installed and ready. */
+  status: DatabaseUpdaterStatus
+}
+
+/**
+ * The state of a debug container.
+ */
+export type DebugState = (typeof DebugState)[keyof typeof DebugState]
+
+export const DebugState = {
+  running: "running",
+  waiting: "waiting",
+  terminated: "terminated",
+  unknown: "unknown",
+} as const
+
+/**
+ * A debug container of Zeabur's.
+ */
+export type DebugContainerStatus = {
+  /** Its image. */
+  image: string
+  /** Its name: the terminal's `container`. */
+  name: string
+  /**
+   * The kubelet's reason (`ErrImagePull`, `Completed`, …).
+   * @nullable
+   */
+  reason?: string | null
+  /** Its state. */
+  state: DebugState
 }
 
 /**
@@ -12118,6 +12164,23 @@ export const getConfigReload = async (
   options?: Parameters<typeof zeaburFetch>[1],
 ): Promise<ConfigReloadView> => {
   return zeaburFetch<ConfigReloadView>(getGetConfigReloadUrl(), {
+    ...options,
+    method: "GET",
+  })
+}
+
+export const getGetDatabaseUpdaterUrl = () => {
+  return `/api/v1/cluster/database-updater`
+}
+
+/**
+ * @summary The updater's live Deployment state. Reads only the public locator and its named Deployment,
+with the person's credential; an unreadable object is unknown, not missing.
+ */
+export const getDatabaseUpdater = async (
+  options?: Parameters<typeof zeaburFetch>[1],
+): Promise<DatabaseUpdater> => {
+  return zeaburFetch<DatabaseUpdater>(getGetDatabaseUpdaterUrl(), {
     ...options,
     method: "GET",
   })
