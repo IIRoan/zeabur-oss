@@ -1,5 +1,5 @@
 name: Full CI validation
-run-name: Zeabur-owned CNPG updater (14d4394a)
+run-name: Zeabur-owned CNPG updater (e0dcd365)
 
 # Each job runs scripts/ci/<job>.sh in the Nix dev shell, the same as locally, except docs, which
 # runs the website's check of docs/ (locally: bun scripts/docs-check.ts <this checkout> in the
@@ -35,7 +35,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-          ref: 8abb340a325f12447258dbf78cf4ca3c7d0f0f19
+          ref: 81409314cc9b72858c19efd5a46ec7b574889ab1
           # scripts/api-break.ts reads the commits since the base for a `BREAKING CHANGE:` footer.
           fetch-depth: 0
       - uses: zeabur-oss/.github/actions/ci-setup@395adf27d31c77538ebf7c154946b52822387b96 # main
@@ -63,7 +63,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-          ref: 8abb340a325f12447258dbf78cf4ca3c7d0f0f19
+          ref: 81409314cc9b72858c19efd5a46ec7b574889ab1
       - uses: zeabur-oss/.github/actions/ci-setup@395adf27d31c77538ebf7c154946b52822387b96 # main
         with:
           rust-cache: true
@@ -79,7 +79,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-          ref: 8abb340a325f12447258dbf78cf4ca3c7d0f0f19
+          ref: 81409314cc9b72858c19efd5a46ec7b574889ab1
           # fallow audit compares HEAD with HEAD^.
           fetch-depth: 2
       - uses: zeabur-oss/.github/actions/ci-setup@395adf27d31c77538ebf7c154946b52822387b96 # main
@@ -96,7 +96,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-          ref: 8abb340a325f12447258dbf78cf4ca3c7d0f0f19
+          ref: 81409314cc9b72858c19efd5a46ec7b574889ab1
       - uses: zeabur-oss/.github/actions/ci-setup@395adf27d31c77538ebf7c154946b52822387b96 # main
         with:
           rust-cache: true
@@ -112,7 +112,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-          ref: 8abb340a325f12447258dbf78cf4ca3c7d0f0f19
+          ref: 81409314cc9b72858c19efd5a46ec7b574889ab1
       - uses: zeabur-oss/.github/actions/ci-setup@395adf27d31c77538ebf7c154946b52822387b96 # main
         with:
           rust-cache: true
@@ -127,7 +127,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-          ref: 8abb340a325f12447258dbf78cf4ca3c7d0f0f19
+          ref: 81409314cc9b72858c19efd5a46ec7b574889ab1
       - uses: zeabur-oss/.github/actions/ci-setup@395adf27d31c77538ebf7c154946b52822387b96 # main
         with:
           rust-cache: true
@@ -142,7 +142,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-          ref: 8abb340a325f12447258dbf78cf4ca3c7d0f0f19
+          ref: 81409314cc9b72858c19efd5a46ec7b574889ab1
       - uses: zeabur-oss/.github/actions/ci-setup@395adf27d31c77538ebf7c154946b52822387b96 # main
       # zhtw-mcp builds from source; main's scheduled run keeps it, keyed on the lock file.
       - id: zhtw-mcp
@@ -170,7 +170,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-          ref: 8abb340a325f12447258dbf78cf4ca3c7d0f0f19
+          ref: 81409314cc9b72858c19efd5a46ec7b574889ab1
       - uses: zeabur-oss/.github/actions/ci-setup@395adf27d31c77538ebf7c154946b52822387b96 # main
         with:
           rust-cache: true
@@ -185,7 +185,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-          ref: 8abb340a325f12447258dbf78cf4ca3c7d0f0f19
+          ref: 81409314cc9b72858c19efd5a46ec7b574889ab1
       - uses: zeabur-oss/.github/actions/ci-setup@395adf27d31c77538ebf7c154946b52822387b96 # main
         with:
           rust-cache: true
@@ -209,7 +209,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-          ref: 8abb340a325f12447258dbf78cf4ca3c7d0f0f19
+          ref: 81409314cc9b72858c19efd5a46ec7b574889ab1
       - uses: zeabur-oss/.github/actions/ci-setup@395adf27d31c77538ebf7c154946b52822387b96 # main
         with:
           rust-cache: true
@@ -225,7 +225,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-          ref: 8abb340a325f12447258dbf78cf4ca3c7d0f0f19
+          ref: 81409314cc9b72858c19efd5a46ec7b574889ab1
       - uses: zeabur-oss/.github/actions/ci-setup@395adf27d31c77538ebf7c154946b52822387b96 # main
         with:
           rust-cache: true
@@ -245,7 +245,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-          ref: 8abb340a325f12447258dbf78cf4ca3c7d0f0f19
+          ref: 81409314cc9b72858c19efd5a46ec7b574889ab1
       - env:
           GH_TOKEN: ${{ github.token }}
           RESULTS: ${{ toJSON(needs) }}
